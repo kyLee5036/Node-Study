@@ -1,2 +1,12 @@
 # learn-express
-learn-express
+
+### 공부내용
+
+#### www
+#### www는 js파일 안에 내용 설명되어있음.
+
+#### app.js
+##### app.js에서 라우터들을 조립하는 형식 (중앙 통제실)
+
+#### 미들웨어
+

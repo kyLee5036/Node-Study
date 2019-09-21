@@ -7,11 +7,14 @@
 var app = require('../app');
 var debug = require('debug')('learn-express:server');
 var http = require('http');
+// app, http 모듈을 불러온다.
 
 /**
  * Get port from environment and store in Express.
  */
 
+ // 포트를 3000으로 지정한다 ( 포트 바꿀 수 있음 (기본포트 :3000 의미임))
+ // 포트 바꿀수있음!!!
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
@@ -19,13 +22,16 @@ app.set('port', port);
  * Create HTTP server.
  */
 
+ // 여기에서 서버를 실행 하지만 app은 뭘까?? app.js에서 보면된다.
+ // 핵심부분 app!!!!!!!!
 var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
 
-server.listen(port);
+ // 서버를 계속실행하는 명령어
+server.listen(port); 
 server.on('error', onError);
 server.on('listening', onListening);
 
