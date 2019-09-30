@@ -10,8 +10,14 @@ var usersRouter = require('./routes/users');
 var app2 = express();
 
 // view engine setup
+// view 폴더 지정
 app2.set('views', path.join(__dirname, 'views'));
+// engine을 지정 ( html을 pug로 대체)
 app2.set('view engine', 'pug');
+
+// use안에 들어있는것을 "미들웨어"
+// 미들웨어가 express의 핵심이다!!!!!!
+
 
 app2.use(logger('dev'));
 app2.use(express.json());
