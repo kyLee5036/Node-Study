@@ -3,7 +3,9 @@ var router = express.Router();
 
 router.get('/', (req, res, next) => {
   console.log("세번째 미들웨어");
-  res.render('test');
+  res.render('test', {
+    fruits : ['사과', '배', '오렌지', '포도'],
+  });
 });
 
 /* GET home page. */

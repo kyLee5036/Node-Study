@@ -1,5 +1,3 @@
-
-
 doctype html
 html
   head
@@ -8,21 +6,11 @@ html
     -const title2 = '안녕';
     title= title + ' ' + title2
     link(rel='stylesheet', href='/stylesheets/style.css')
-    style.
-        h1 {
-            color : red;
-        }
-        #thisIsIdName {
-            color : blue;
-        }
-        .ThisIsClassName {
-            font-size : 25px;
-            color : green
-        }
-
+   
   body
+
     include header
-    include main
+    block content
     
 
     include footer
