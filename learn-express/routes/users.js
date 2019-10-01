@@ -3,14 +3,18 @@ var router = express.Router();
 
 
 // Get/ users
-app.get('/', (req, res) => {
+router.get('/', (req, res) => {
+  res.send('Hello Users');
+});
+
+// delete/ users
+router.get('/delete', (req, res) => {
   res.send('Hello Users');
 });
 
 
-// delete/ users
-app.get('/delete', (req, res) => {
-  res.send('Hello Users');
+router.delete('/', (req, res) => {
+
 });
 
 module.exports = router;

@@ -56,7 +56,17 @@ app.use('/', indexRouter);
 // 앞에 주소를 적어서 미리 "/users"를 사용한다
 app.use('/users', userRouter);
 
+// 없는 주소를 방지할려면 404처리 미들웨어!!
+// error : 404 NOT FOUND
+app.use( (req, res, next) => {
+  res.status(404).send('NOT FOUND');
+});
 
+// error : 500 서버 에러
+app.use(function(err, req, res, next) {
+  console.log(err);
+  res.status(500).send('SERVER ERR');
+})
 
 
 
