@@ -16,7 +16,10 @@ const userRouter = require('./routes/users');
 
 const app = express();
 
-
+// view 폴더 지정
+app.set('views', path.join(__dirname, 'views'));
+// engine을 지정 ( html을 pug로 대체)
+app.set('view engine', 'pug');
 // logger적용시키기
 // logger는 응답시간을 요청해준다
 app.use(logger('dev'));
