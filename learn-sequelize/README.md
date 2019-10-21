@@ -18,5 +18,5 @@ N대N belongsToMany
 Promise에 지원해주는 메서드
 
 create 생성하기
-findAll 모두 찾기
+findAll 모두 찾기 
 find 하나만 찾기
