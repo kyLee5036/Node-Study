@@ -19,6 +19,9 @@
 #### 404 처리 미들웨어와 500 에러 처리 미들웨어
 
 #### pug문법 (조건, 반복, include, layout)
+##### express 명령어가 되지 않을 경우 : npm install -g express-generator
+
 
 ### 시퀄라이즈
+### 몽구디비
 
