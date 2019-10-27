@@ -42,6 +42,7 @@ views -> monngoose.pug는 퍼옴<br>
 
 ```javascript
 // 몽구스파일 불러오기
+// 몽구스 사용하기 위해서 필요 npm i mongoose도 해줘야한다.
 const mongoose = require('mongoose');
 
 module.exports= () => {
