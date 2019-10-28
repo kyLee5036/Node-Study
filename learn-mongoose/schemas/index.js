@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 module.exports= () => {
     const connect = () => {
         // 실제 하드코딩하면 위험하다. 나중에는 변수에서 빼준다.
-        mongoose.connect('mongodb://root:dpttjt147@localhost:27017/admin', {
+        mongoose.connect('mongodb://DB_USER_ID:DB_USER_PASSWORD@localhost:27017/admin', {
             dbName: 'nodejs' ,
         }, (error) => {
             if (error) {
