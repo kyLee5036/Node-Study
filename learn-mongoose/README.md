@@ -42,7 +42,6 @@ views -> monngoose.pug는 퍼옴<br>
 
 ```javascript
 // 몽구스파일 불러오기
-// 몽구스 사용하기 위해서 필요 npm i mongoose도 해줘야한다.
 const mongoose = require('mongoose');
 
 module.exports= () => {
@@ -73,3 +72,83 @@ module.exports= () => {
     require('./comment');
 }
 ```
+
+### routes/index
+```javascript
+var express = require('express');
+var User = require('../schemas/user');
+
+var router = express.Router();
+
+router.get('/', function (req, res, next) {
+    // find 정보를 모두가져온다.
+  User.find({})
+    .then((users) => {
+      res.render('mongoose', { users });
+    })
+    .catch((err) => {
+      console.error(err);
+      next(err);
+    });
+});
+
+module.exports = router;
+}
+```
+
+find: 모두찾기<br>
+findOne: 하나만찾기<br>
+new 스키마(data).save: 생성<br>
+update: 수정하기<br>
+remove: 제거하기<br>
+
+## - Mogoose populate
+
+populate(필드)가 시퀄라이즈 include와 비슷한 역할을 한다.<br>
+조인과 가능기능 (populate)
+
+### routes/comment.js
+
+```javascript
+router.get('/:id', function (req, res, next) {
+    // pupulate('commenter) -> 오브젝트 ID가 사용자에 대한 객체로 변환다. (몽구스의 장점) --> populate -> 스키마를 조사를한다 
+    // 몽구스의 기능 : populate는 조인과 같은기능!!! 
+  Comment.find({ commenter: req.params.id }).populate('commenter')
+    .then((comments) => {
+      console.log(comments);
+      res.json(comments);
+    })
+    .catch((err) => {
+      console.error(err);
+      next(err);
+    });
+});
+
+```
+밑에 자세히 보면 ref가 있다. 
+
+### schema/comment.js
+
+```javascript
+const commentSchema = new Schema({
+    // ref가 user의 기본 키를 참조를 한다.
+    // NoSQL이니까 관계는 없다. 
+    commenter: {
+        type: ObjectId,
+        required: true,
+        ref: 'User',
+    },
+      comment: {
+        type: String,
+        required: true,
+    },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+});
+
+```
+
+
+
