@@ -23,7 +23,7 @@
   "author": "LEEKY",
   "license": "ISC",
   "bin": {
-    "bin": "./index.js"
+    "cli": "./index.js"
   }
 }
 ```
