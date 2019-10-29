@@ -12,8 +12,19 @@
 #### pachage.json
 
 ```javascript 
-"bin": {
-    "cli": "./index.js"
+{
+  "name": "node_cli",
+  "version": "0.0.1",
+  "description": "node CLI program",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "LEEKY",
+  "license": "ISC",
+  "bin": {
+    "bin": "./index.js"
+  }
 }
 ```
 이거 cli 되지 않는 경우에는 cli를 다른거 바꾸고 실행해보기
