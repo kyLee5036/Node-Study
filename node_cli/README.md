@@ -33,7 +33,8 @@
     "bin": "./index.js"
 }
 ```
-
+또는
+powershell에 실행하지 않고, cmd에 실행해보기!!!!!
 
 cli명령어를 할수있다. cli 명령어 하기전에 npm i -g 해야한다. <br>
 전역설치하는 순간 cli프로그램이 된다. <br>
