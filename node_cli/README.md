@@ -40,11 +40,11 @@ cli명령어를 할수있다. cli 명령어 하기전에 npm i -g 해야한다. 
 전역설치하는 순간 cli프로그램이 된다. <br>
 실행할려면 <strong>cli</strong> 치면 된다.<br>
 
-+ TIP) 패키지명과 명령어명이 꼭 같을 필요가 없다.
+TIP) 패키지명과 명령어명이 꼭 같을 필요가 없다.
 
-precess.argv: 사용자가 입력한 내용을 배열로 출력한다<br>
-precess.argv[0] : 노드 설치 경로<br>
-precess.argv[1] : 파일 위치 경로<br>
++ precess.argv: 사용자가 입력한 내용을 배열로 출력한다<br>
++ precess.argv[0] : 노드 설치 경로<br>
++ precess.argv[1] : 파일 위치 경로<br>
 <pre><code>precess.argv
 precess.argv[0]
 precess.argv[1]
@@ -85,4 +85,156 @@ rl.question('예제 재미있습니까? (y/n)', (answer) => {
 });
 ```
 
+* * * 
+#### template.js
 
+```javascript
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+
+// 타입
+const type = process.argv[2];
+// 파일명
+const name = process.argv[3];
+// 디렉터리 (파일경로), '.'는 현재경로
+const directory = process.argv[4] || '.';
+
+const htmlTemplate = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <h1>CLI Hello</h1>
+</body>
+</html>`;
+
+const routerTemplate = `const express = require('express');
+const router = express.Router();
+
+router.get('/', (req, res, next) => {
+    try {
+      res.send('ok');
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
+ });
+
+ module.exports = router;`;
+
+ // 잊어버렸으면 path 강좌보기
+const mkdirp = (dir) => {
+    // 절대경로 -> C:\folder/html/index.html
+    // 상대경로 -> ./folder/html/index.html
+    // sep는 `/` 의미한다. 
+
+    // 상대경로 알려주는 메서드
+    const dirname = path
+    .relative('.', path.normalize(dir))
+    .split(path.sep)
+    .filter(p => !!p);
+    dirname.forEach((element, index) => {
+        // [css. ,js, html] 파일들이 있다고하면 
+        // css 존재 하지않으면 css 만들고, js 존재 하지않으면 js 만들고... 순서대로 간다.
+        const pathBulider = dirname.slice(0, index + 1).join(path.sep);
+        if (!exist(pathBulider)) {
+            fs.mkdirSync(pathBulider)
+        }
+
+    });
+};
+
+const exist = (dir) => {
+    try {
+        // fs.constants.F_OK : 파일존재, fs.constants.R_OK : 읽기가능여부,  
+        // fs.constants.W_OK: 쓰기가능여부
+        fs.accessSync(
+          dir, 
+          fs.constants.F_OK | 
+          fs.constants.R_OK | 
+          fs.constants.W_OK
+          );
+        return true;
+      } catch (e) {
+        return false;
+      }
+};
+
+const makeTemplate = () => {
+    // 폴더 경로를 먼저 만들어준다.
+    mkdirp(directory);
+    // html 만드는 코드
+    if (type === 'html') {
+        // directory(파일경로) + 파일명
+        const pathToFile = path.join(directory, `${name}.html`);
+        // 파일 존재 검사 여부
+        if (exist(pathToFile)) {
+          console.error('이미 해당 파일이 존재합니다');
+        } else {
+            // 한 번만 실행되는 경우에는 Sync 써도 된다.
+            // 여러 번 동시에 호출 될 것 같으면 쓰면 안된다.
+          fs.writeFileSync(pathToFile, htmlTemplate);
+          console.log(pathToFile, '생성 완료');
+        }
+      }
+      // router 만드는 코드 
+      else if (type === 'express-router') {
+        const pathToFile = path.join(directory, `${name}.js`);
+        if (exist(pathToFile)) {
+          console.error('이미 해당 파일이 존재합니다');
+        } else {
+          fs.writeFileSync(pathToFile, routerTemplate);
+          console.log(pathToFile, '생성 완료');
+        }
+      } else {
+        console.error('html 또는 express-router 둘 중 하나를 입력하세요.');
+      }
+};
+
+ // 프로그램이라는 함수를 만든다
+const program = () => {
+    // 핵심적인 코드
+    // 타입이랑 이름을 입력하지 않으면
+    if (!type || !name) {
+        console.error(`사용방법: cli html|express-router 파일명 [생성 경로]`);
+    } else {
+        makeTemplate();
+    }
+};
+program();
+```
+
+#### package.json
+
+```javascript 
+"bin": {
+    "cli": "./template.js"
+}
+```
+index.js에서 template.js으로 바꿔준다. 
+<br>그리고 
+npm i -g 다시 실행한다
+
+### 실행결과
+<pre><code>D:\_Node_Study\node_cli>cli
+사용방법: cli html|express-router 파일명 [생성 경로]
+</code></pre>
+<pre><code>D:\_Node_Study\node_cli>cli html main public/html
+public\html\main.html 생성 완료
+</code></pre>
+
+
+<pre><code>D:\_Node_Study\node_cli>cli express-router index ./routes
+routes\index.js 생성 완료
+</code></pre>
+<pre><code>D:\_Node_Study\node_cli>cli express-router index ./routes
+이미 해당 파일이 존재합니다
+</code></pre>
+
+프로그램이 알아서 만들어준다. 
+
+* * *
