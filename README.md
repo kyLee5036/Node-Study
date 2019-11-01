@@ -8,10 +8,10 @@
 app.js에서 라우터들을 조립하는 형식 ( 중앙 통제실 )
 
 ### 미들웨어
-<strong>express의 핵심이다!!</strong>
-next()는 다음 미드웨어로 넘어간다.
-use는 모든경우에 적용되는 미들웨어, get, post, delete는 특수한 경우에 적용되는 미들웨어
-logger는 미들웨어 요청시간을 보여준다 (ex GET / 304 55.651 ms - - )
+<strong>express의 핵심이다!!</strong><br>
+next()는 다음 미드웨어로 넘어간다.<br>
+use는 모든경우에 적용되는 미들웨어, get, post, delete는 특수한 경우에 적용되는 미들웨어다.<br>
+logger는 미들웨어 요청시간을 보여준다 (ex GET / 304 55.651 ms - - )<br>
 
 ### rounter 분리
 
