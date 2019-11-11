@@ -195,14 +195,67 @@ program
 public\html\new.html 생성 완료
 </code></pre>
 
-<pre><code>
+
+### inquirer, chalk 사용하기
+
+chalk는 글자를 꾸며준다 ( font-size, color, font-bold와 비슷한 느낌이다.)
+<br>type : 프롬프트 종류
+<br>name : 질문명
+<br>message : 메시지
+<br>choices : 선택지
+<br>default : 기본값
+
+```javascript
+const chalk = require('chalk');
+const inquirer = require('inquirer');
+
+...위 생략
+
+if (!triggered) {
+  // 질문과 답변 -< prompt();
+  inquirer.prompt([{
+    type : 'list',
+    name: 'name',
+    message: '템플릿 종류를 선택하세요',
+    choices: ['html', 'express.router'],
+  }, {
+    type : 'input',
+    name: 'name',
+    message: '파일의 이름을 입력하세요.',
+    default: 'index',
+  }, {
+    type : 'input',
+    name: 'directory',
+    message: '파일의 위치할 폴더의 경로를 입력하세요.',
+    choices: '.',
+  }, {
+    type : 'confirm',
+    name: 'confirm',
+    message: '생성하시겠습니까?',
+  }])
+    .then((answer) => {
+      if(!answer.confirm) {
+        makeTemplate(answer.type, answer.name, answer.directory);
+      }
+    })
+}
+
+```
+
+<pre><code>D:\_Node_Study\node_cli\Ch02>cli
+? 템플릿 종류를 선택하세요 html
+? 파일의 이름을 입력하세요. index
+? 파일의 위치할 폴더의 경로를 입력하세요. public/html
+? 생성하시겠습니까? Yes
 </code></pre>
+
+
 
 <pre><code>
 </code></pre>
 
 <pre><code>
-</code></pre> 
+</code></pre>
 
 <pre><code>
 </code></pre>
