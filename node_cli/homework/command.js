@@ -90,6 +90,27 @@ const copyFile = (name, directory) => {
 let triggered = false;
 
 
+// 파일 지우기 메서드
+const rimraf = (p) => {
+  // 여기서 path가 폴더인지 파일인지를 구별해야한다.
+  // 자세한 건 공식문서에 참고해야한다.
+  if (exist(p)) {
+    try {
+      const dir = fs.readdirSync(p);
+      dir.forEach((d) => {
+        rimraf(path.join(p, d));
+      });
+      fs.rmdirSync(p);
+      console.log(`${p} 폴더를 삭제했습니다.`)
+    } catch (e) {
+      fs.unlinkSync(p);
+      console.log(`${p} 파일을 삭제했습니다.`)
+    }
+  } else {
+    console.log('파일 또는 폴더가 존재하지 않아요')
+  }
+}
+
 program
   .version('0.0.1', '-v, --version') 
   .usage('[options]'); 
@@ -106,6 +127,7 @@ program
     triggered = true;
   });
 
+// 파일 복사하기
 program
   .command('copy <name> <directory>') // <이름> <복사할 장소>
   .usage('<name> <directory>')
@@ -114,6 +136,17 @@ program
     copyFile(name, directory);
     triggered = true;
   })
+
+// 파일 지우기 파일
+program
+  .command('rimraf <path>')
+  .usage('<path>')
+  .description('지정한 경로와 그 아래 파일/폴더를 지웁니다.')
+  .action( (path) => {
+    rimraf(path);
+    triggered = true;
+  })
+
 
 program
   .command('*', { 
