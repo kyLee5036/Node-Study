@@ -1,0 +1,21 @@
+{
+  "name": "homework2",
+  "version": "0.0.1",
+  "description": "DB와 연동하게",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "wlt": "./wallet.js"
+  },
+  "author": "LEEKY",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^3.0.0",
+    "commander": "^4.0.1",
+    "inquirer": "^7.0.0",
+    "mysql2": "^2.0.0",
+    "sequelize": "^5.21.2"
+  }
+}

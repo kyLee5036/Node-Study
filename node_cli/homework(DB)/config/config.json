@@ -1,0 +1,28 @@
+{
+  "development": {
+    "username": "root",
+    "password": "패스워드",
+    "database": "데이터베이스명",
+    "host": "127.0.0.1",
+    "port": "포트바뀌면 써주세요",
+    "dialect": "mysql",
+    "operatorsAliases": false,
+    "logging" : false
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "operatorsAliases": false
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "database_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+    "operatorsAliases": false
+  }
+}
