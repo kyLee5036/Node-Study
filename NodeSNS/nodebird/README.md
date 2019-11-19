@@ -78,3 +78,28 @@ app.listen(app.get('port'), () => {
     console.log(`${app.get('port')}번 포트에서 서버 실행중입니다.`);
 })
 ```
+
+
+## dotenv 사용하기
+
+dotenv(.env)파일은 비밀파일이다. (절대로 온라인에 올리면 안된다.!!!)<br>
+비밀번호를 다 .env파일에 적어두고 관리를 조심스럽게 하면 된다.
+<pre><code><strong>npm i dotenv</strong>
++ dotenv@8.2.0
+</code></pre>
+
+#### .env
+```javascript
+COOKIE_SECRET=나는 비밀키이다!!!!하지만 비밀키이다!! 
+PORT=나는 포트번호다!!!!하지만 비밀키이다
+```
+
+#### app.js
+```javascript
+// dotenv파일을 설정해준다.
+require('dotenv').config();
+
+// process.env로 불러온다.
+app.use(cookieParse(process.env.COOKIE_SECRET));
+secret: process.env.COOKIE_SECRET,
+```
