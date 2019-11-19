@@ -1,5 +1,9 @@
 # nodebird
 
++ [SNS(NodeBird) 프로젝트 구조 세팅](#SNS(NodeBird)-프로젝트-구조-세팅)
++ [dotenv 사용하기](#dotenv-사용하기)
++ [기본 라우터와 pug 파일 세팅](#기본-라우터와-pug-파일-세팅)
+
 ## SNS(NodeBird) 프로젝트 구조 세팅
 
 #### package.json
@@ -103,3 +107,36 @@ require('dotenv').config();
 app.use(cookieParse(process.env.COOKIE_SECRET));
 secret: process.env.COOKIE_SECRET,
 ```
+
+## 기본 라우터와 pug 파일 세팅
+
+#### app.js
+
+```javascript
+// 라우터 셋팅
+const indexRouter = require('./routes/page'); // page가 index로 보면 됨
+
+
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+app.set('port', process.env.PORT || 8001);
+
+
+// 404 에러처리
+app.use((req, res, next) => {
+    const err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+});
+// 500 에러처리
+app.use((err, req, res, next) => {
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
+    res.status(err.status || 500);
+    res.render('error');
+});
+```
+
+#### routes/page.js
+
+page.js에서 참고
