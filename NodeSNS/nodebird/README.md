@@ -3,7 +3,9 @@
 + [SNS(NodeBird) 프로젝트 구조 세팅](#SNS(NodeBird)-프로젝트-구조-세팅)
 + [dotenv 사용하기](#dotenv-사용하기)
 + [기본 라우터와 pug 파일 세팅](#기본-라우터와-pug-파일-세팅)
-+ [모델/테이블 만들기](#모델/테이블-만들기)
++ [모델,테이블 만들기](#모델,테이블-만들기)
++ [다대다 관계 이해하기](#다대다-관계-이해하기)
+ 
 
 ## SNS(NodeBird) 프로젝트 구조 세팅
 
@@ -216,3 +218,115 @@ module.exports = ( (sequlize, DataTypes) => (
 여기에서 <strong>password에 null이 허용</strong> 하는 이유는 : 카카오 로그인에 패스워드가 null이 되기때문에, <br>
 즉, 카카오 로그인하면 패스워드는 카카오에서 관리를 한다.<br>
 <strong>provider</strong>는 local과 kakao 구분하기 위해서 ( 그 외에도 구글, 깃허브 구분도 가능)
+
+
+## 다대다 관계 이해하기 
+
+### 1:1관계, 1:N관계, N:N관계(3가지 경우있음)
+
+#### app.js
+
+```javascript
+...내용 생략
+const indexRouter = require('./routes/page');
+// const userRouter = require('./routes/user');
+
+// *** DB 연결 (sequelize를 불러온다.) *** 
+const { sequelize } = require('./models');
+
+const app = express();
+// *** DB 연결 ( DB를 사용한다. ) *** 
+sequelize.sync();
+
+app.set('view engine', 'pug');
+...내용생략
+```
+
+
+<strong>1대1 관계</strong> : 주가 되는 것이 가장 먼저 나와야한다. (일단 예시 설명이라서 1대N관계 예시문이랑 내용이 똑같다.)
+
+```javascript
+db.User.hasOne(db.Post); // 사용자가 게시글을 가지고있다.
+db.User.belongsTo(db.User); // 게시글은 사용자에게 속해 있다.
+```
+
+<strong>1대N 관계(1대다 관계)</strong> : 사용자 한 명이 게시글 여러개를 업로드 할 수 있다. 순서가 관계있음. 주가 되는 것이 가장 먼저 나와야한다.
+
+```javascript
+db.User.hasMany(db.Post); // 사용자가 게시글을 많이 가지고 있다.
+db.Post.belongsTo(db.User); // 게시글은 사용자에게 속해 있다.
+```
+
+<strong>N대N 관계(다대다 관계)</strong> : 순서가 관계없다. <strong>belongsToMany</strong>으로 구분한다.<br>
+<strong>through</strong>에는 새로 생기는 모델이름을 넣어준다 (매칭 테이블)<br>
+
+1. 다대다 관계 ( 해시태그 ) - 다른 테이블을 2개 사용한다.<br> <strong>through</strong>에서 'PostHashtag'라는 테이블 만들어준다.
+```javascript
+db.Post.belongsToMany(db.Hashtag, { through: 'PostHashtag'});
+db.Hashtag.belongsToMany(db.Post, { through: 'PostHashtag'});
+```
+
+<pre><code>예시
+1번글 : 안녕하세요 #노드 #익스프레스
+2번글 : 안녕하세요 #노드 #제이드
+3번글 : 안녕하세요 #제이드 #퍼그
+
+1번글 - 1
+1번글 - 2
+2번글 - 1
+2번글 - 3
+3번글 - 3
+3번글 - 4
+
+1. 노드
+2. 익스프레스
+3. 제이드
+4. 퍼그
+</code></pre>
+
+<br>
+
+2. 다대다 관계 (팔로잉, 팔로워 관계) - 같은 테이블을 2개 사용한다.<br>
+여기서 알아야 할 점 : 서로 테이블 이름이 같다, 누가 팔로워인지 누가 팔로잉인지 모른다<br>
+그래서 <strong>as</strong>랑 <strong>foreignKey</strong>가 나온다.<br>
+Follow라는 테이블을 만들어주고 관계설정을 한다.
+
+```javascript 
+db.User.belongsToMany(db.User, {through: 'Follow', as: 'Followers', foreignKey: 'followingId'}); // 팔로워로 결정
+db.User.belongsToMany(db.User, {through: 'Follow', as: 'Following', foreignKey: 'followerId'}); // 팔로잉으로 결정
+```
+
+<strong>as</strong> : 매칭 모델 이름<br>
+<strong>foreignKey</strong> : 상대 테이블 아이디<br>
+<strong>A.belongsToMany(B, {as: 'B_name', foreignKey: 'A_id' })</strong><br>
+
+<pre><code>예시
+ 1. 제로
+ 2. 네로
+ 3. 히어로
+
+ 일반인(팔로워) - 유명인(팔로잉)
+ 1 - 2 : 제로가 네로를 팔로워한다. 
+ 1 - 3 : 제로가 히어로를 팔로워한다.
+ 2 - 3 : 네로가 히어로를 팔로워한다.
+ 3 - 1 : 히어로가 제로를 팔로워한다.
+반대 입장에도 생각할 것!
+
+ 1. 제로
+ 2. 네로
+ 3. 히어로
+</code></pre>
+
+<br>
+
+3. 다대다 관계 ( 좋아요 관계 )
+
+```javascript 
+db.User.belongsToMany(db.Post, {through: 'Like' });
+db.Post.belongsToMany(db.User, {through: 'Like' });
+```
+
+
+
+
+

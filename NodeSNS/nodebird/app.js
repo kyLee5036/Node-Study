@@ -6,11 +6,15 @@ const session = require('express-session');
 const flash = require('connect-flash');
 require('dotenv').config();
 
-// 라우터 셋팅
 const indexRouter = require('./routes/page');
 // const userRouter = require('./routes/user');
 
+
+const { sequelize } = require('./models');
+
 const app = express();
+
+sequelize.sync();
 
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
