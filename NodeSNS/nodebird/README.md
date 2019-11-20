@@ -3,6 +3,7 @@
 + [SNS(NodeBird) 프로젝트 구조 세팅](#SNS(NodeBird)-프로젝트-구조-세팅)
 + [dotenv 사용하기](#dotenv-사용하기)
 + [기본 라우터와 pug 파일 세팅](#기본-라우터와-pug-파일-세팅)
++ [모델/테이블 만들기](#모델/테이블-만들기)
 
 ## SNS(NodeBird) 프로젝트 구조 세팅
 
@@ -99,6 +100,9 @@ PORT=나는 포트번호다!!!!하지만 비밀키이다
 ```
 
 #### app.js
+
+<strong>views의 pug들은 생략하겠음.</strong>
+
 ```javascript
 // dotenv파일을 설정해준다.
 require('dotenv').config();
@@ -140,3 +144,75 @@ app.use((err, req, res, next) => {
 #### routes/page.js
 
 page.js에서 참고
+
+## 모델/테이블 만들기
+
+-> 테이블 : models에다가 파일을 만든다. <br>
+models의 테이블 정의
+
+#### models/index.js
+
+```javascript
+const Sequelize = require('sequelize');
+const env = process.env.NODE_ENV || 'development';
+const config = require(__dirname + '/../config/config.json')[env];
+const db = {};
+
+const sequelize = new Sequelize(
+  config.database, config.username, config,password, config,
+);
+
+
+db.sequelize = sequelize;
+db.Sequelize = Sequelize;
+
+module.exports = db;
+```
+최신버전으로 바꾸어 주었다.
+
+#### models/user.js
+```javascript
+// 사용자 테이블
+
+module.exports = ( (sequlize, DataTypes) => (
+    // 테이블 user 정의
+    sequlize.define( 'user', {
+        email : {
+            type: DataTypes.STRING(40),
+            allowNull : false,
+            unique: true,
+        },
+        nick : {
+            type: DataTypes.STRING(15),
+            allowNull: false,
+        },
+        password: {
+            type: DataTypes.STRING(100),
+            allowNull: true, // 카카오 로그인 위해서 true를 해준다. 나중에 데이터베이스 확인할 것.
+        },
+        // provider는 local과 kakao 구분하기 위해서
+        provider: {
+            type:DataTypes.STRING(10),
+            allowNull: false,
+            defaultValue: 'local',
+        },
+        snsID: {
+            type: DataTypes.STRING(30),
+            allowNull: true,
+        }
+    }, {
+        timestamps : true,
+        paranoid : true,
+    })
+));
+
+
+```
+
+대표적으로 user.js 하나만 설명한다.<br>
+<strong>timestamps</strong> : 생성일, 수정일<br>
+<strong>tparanoid</strong> : 삭제일 (복구일) -> 이걸하면 복구를 할 수있다.<br>
+
+여기에서 <strong>password에 null이 허용</strong> 하는 이유는 : 카카오 로그인에 패스워드가 null이 되기때문에, <br>
+즉, 카카오 로그인하면 패스워드는 카카오에서 관리를 한다.<br>
+<strong>provider</strong>는 local과 kakao 구분하기 위해서 ( 그 외에도 구글, 깃허브 구분도 가능)
