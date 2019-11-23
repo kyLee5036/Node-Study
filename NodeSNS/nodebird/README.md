@@ -5,7 +5,7 @@
 + [기본 라우터와 pug 파일 세팅](#기본-라우터와-pug-파일-세팅)
 + [모델,테이블 만들기](#모델,테이블-만들기)
 + [다대다 관계 이해하기](#다대다-관계-이해하기)
- 
++ [passport 세팅과 passportLocal전력](#passport-세팅과-passportLocal전력)
 
 ## SNS(NodeBird) 프로젝트 구조 세팅
 
@@ -220,7 +220,7 @@ module.exports = ( (sequlize, DataTypes) => (
 <strong>provider</strong>는 local과 kakao 구분하기 위해서 ( 그 외에도 구글, 깃허브 구분도 가능)
 
 
-## 다대다 관계 이해하기 
+## passport 세팅과 passportLocal전력 
 
 ### 1:1관계, 1:N관계, N:N관계(3가지 경우있음)
 
@@ -326,7 +326,34 @@ db.User.belongsToMany(db.Post, {through: 'Like' });
 db.Post.belongsToMany(db.User, {through: 'Like' });
 ```
 
+## passport 세팅과 passportLocal전력
+
+### <strong>bcrypt</strong> 오류해결
+
+이거 설치하기 전에 bcrypt가 잘 안될 경우를 설명한다.
+<pre><code>윈도우 검색창 -> powershell -> 관리자 권한 실행
+PS C:\WINDOWS\system32> npm i -g windows-build-tools
+
+...내용샹략
+
+All done!
+
++ windows-build-tools@5.2.2
+updated 1 package in 217.964s
+</code></pre>
++ windows-build-tools@5.2.2 이 명령문이 절대적으로 나와야만 성공했다는 의미이다.<br>
+(시간이 좀 걸려서 기다리도록 한다.)<br>
+
+「npm i -g windows-build-tools」의 의미란? <br>
+-> 윈도우에서 필수인 c, c++ 관련된 것들과 파이썬같은 것을 설치해서 다른 언어를 사용하는 라이브러리르 지원할 수 있게 해준다. <br>bcrypt는 속도 때문에 c++로 내부적으로 사용한다.
+
+「npm i -g windows-build-tools」 설치완료를 하고나서 이하의 bcrypt를 실행하면 된다.
+<pre><code>D:\_Node.js\_NodeStudy_inflearn\Node-Study\NodeSNS\nodebird>npm i bcrypt
++ bcrypt@3.0.7</code></pre>
 
 
+### passport 세팅과 passportLocal전력
+
+<pre><code>npm i passport passport-local passport-kakao</code></pre>
 
 
