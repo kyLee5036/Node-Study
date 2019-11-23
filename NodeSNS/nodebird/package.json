@@ -19,6 +19,9 @@
     "flash": "^1.1.0",
     "morgan": "^1.9.1",
     "mysql2": "^2.0.0",
+    "passport": "^0.4.0",
+    "passport-kakao": "^1.0.0",
+    "passport-local": "^1.0.0",
     "pug": "^2.0.4",
     "sequelize": "^5.21.2"
   },

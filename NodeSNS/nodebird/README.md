@@ -355,5 +355,92 @@ updated 1 package in 217.964s
 ### passport 세팅과 passportLocal전력
 
 <pre><code>npm i passport passport-local passport-kakao</code></pre>
+<pre><code>+ passport-local@1.0.0
++ passport-kakao@1.0.0
++ bcrypt@3.0.7
++ passport@0.4.0</code></pre>
 
+#### app.js
+```javascript
+//passport 연결
+const passportConfig = require('./passport');
+passportConfig(passport);
+...이하생략
 
+// passprot 연결 (미들웨어도 있다. ) 
+// app.use(session ~~~ )의 위치보다 아래에 있어야 한다.
+// passport 설정들을 초기화
+app.use(passport.initialize());
+// 로그인할 때 사용자 정보와 같은 것들을 저장한다.
+app.use(passport.session());
+```
+
+#### passport/index.js
+
+<strong>passport의 핵심역할</strong>
+
+```javascript
+const local = require('./localStrategy');
+const kakao = require('./kakaoStrategy');
+// passport 로그인할 때 이것을 사용한다.
+module.exports = (passport) => {
+    local(passport);
+    kakao(passport)
+}
+```
+(Strategy(전략) - 누구를 로그인 시킬 것인가?)<br>
+kakaoStrategy, googleStrategy, facebookStrategy 등 있다.<br>
+
+#### passport/localStratgy
+
+done(서버에러)<br>
+done(null, 사용자 정보)<br>
+done(null, false, 실패 정보) -> done(에러, 성공, 실패)<br>
+
+```javascript
+const LocalStratgy = require('passport-local').Strategy; // Strategy 잊어버리지 말기!!
+const bcrypt = require('bcrypt');
+const { User } = require('../models'); 
+
+module.exports = (passport) => {
+    passport.use(new LocalStratgy({
+        usernameField: 'email', // req.body.email
+        passwordField: 'password', // req.body.password
+    }, async (email, password, done) => {
+       
+        try {
+            const exUser = await User.find({ where : {email}});
+            // email이 존재할 경우
+            if (exUser) {
+                // 비밀번호 검사 (비밀번호를 비교한다.) 
+                // password 입력한 비밀번호, 
+                // exUser.password : 디비에 있는 패스워드
+                // result에는 true 혹은 false가 나온다.
+                const result = await bcrypt.compare(password, exUser.password);
+                if (result) {
+                    done(null, exUser);
+                } else {
+                    done(null, false, {message: '가입되지 않은 회원입니다.'});
+                }
+            } else {
+                done(null, false, {message: '가입되지 않은 회원입니다.'});
+            }
+        } catch( error) {
+            console.error(error);
+            done(error);
+        }
+    }));
+}
+
+```
+
+app.js에서의 urlencoded 미들웨어가 해석한 req.body 값들을<br> 
+<strong>usernameField(=req.body.email)</strong><br> 
+<strong>passwordField(=req.body.password)</strong>에 연결한다.
+
+```javascript
+app.use(express.urlencoded({
+    extended: false
+}));
+```
+    

@@ -4,17 +4,21 @@ const morgan = require('morgan');
 const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
+const passport = require('passport');
 require('dotenv').config();
 
 const indexRouter = require('./routes/page');
 // const userRouter = require('./routes/user');
 
-
 const { sequelize } = require('./models');
+
+//passport 연결
+const passportConfig = require('./passport');
 
 const app = express();
 
 sequelize.sync();
+passportConfig(passport);
 
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
@@ -37,6 +41,13 @@ app.use(session({
     }
 }));
 app.use(flash());
+
+// passprot 연결 (미들웨어도 있다) app.use(session) 보다 아래에 있어야 한다.
+// passport 설정들을 초기화
+app.use(passport.initialize());
+// 로그인할 때 사용자 정보와 같은 것들을 저장한다.
+app.use(passport.session());
+
 
 app.use('/', indexRouter);
 
