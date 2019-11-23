@@ -401,7 +401,7 @@ kakaoStrategy, googleStrategy, facebookStrategy 등 있다.<br>
 
 done(서버에러)<br>
 done(null, 사용자 정보)<br>
-done(null, false, 실패 정보) -> done(에러, 성공, 실패)<br>
+<strong>done(null, false, 실패 정보) -> done(에러, 성공, 메세지)</strong><br>
 
 ```javascript
 const LocalStratgy = require('passport-local').Strategy; // Strategy 잊어버리지 말기!!
@@ -501,4 +501,93 @@ module.exports = router;
 
 ## 로그인 로그아웃 구현
 - [제일 위로가기](#nodebird)
+
+#### routes/middlewares.js
+```javascript
+// 로그인 했을 경우
+exports.isLoggedIn = (req, res, next) => {
+    // isAuthenticated() 로그인 여부를 알려준다.
+    if ( req.isAuthenticated()) {
+        next();
+    // 로그인 했었는데 오류가 나올 수도 있으니까 에러처리 해준다.
+    } else {
+        res.status(403).send('로그인 필요')
+    }
+}
+
+// 로그인을 안 했을경우
+exports.isNotLoggedIn = (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        next();
+    } else {
+        // 자기맘대로 지정해도된다.
+        res.redirect('/');
+    }
+}
+```
+로그인 했을 경우, 로그인 안했을 경우를 넣어줬다.<br>
+여기서 <strong>isAuthenticated() 로그인 여부</strong>를 알려준다.
+
+
+#### routes/auth.js
+
+```javascript
+const {isLoggedIn, isNotLoggedIn} = require('./middlewares');
+
+추가된 점이 isNotLoogIn이 추가되었다. (회원가입 할 경우에는 로그인이 안되어있기 때문에)
+router.post('/join', isNotLoggedIn, async (req, res, next) => {
+
+로그인 할 경우에는 로그인이 되어있지 않았기 떄문에 isNotLoggedIn를 해줬다.
+router.post('/login', isNotLoggedIn, (req, res, next) => {
+    // req.body.email, req.body.password
+    //done ( 에러, 성공, 실패메세지) 가 아래로 전달한다 =done(authError, user, info) => {}
+    passport.authenticate('local', (authError, user, info) => {
+        // 로그인 에러일 경우
+        if(authError) {
+            console.error(authError);
+            return next(authError);
+        }
+        // 로그인 실패한 경우
+        if (!user) {
+            req.flash('loginError', info.message);
+            return res.redirect('/');
+        }
+
+        // 에러가 없기때문에 에러메시지 안 적어주고 바로 로그인 실행한다.!!!!!!!!!
+
+        // 로그인의 정보을 얻는다. 세션에 로그인이 저장된다.
+        // 유저정보를 찾고싶으면 req.user에 들어있다.
+        // req.login은 passport에 받아오는 거다.
+        return req.login(user, (loginError) => {
+            // 혹시나, 로그인에서 실패할 경우 에러 점검한다.
+            if (loginError) {
+                console.error(loginError);
+                return next(loginError);
+            }    
+            return res.redirect('/');
+        });
+    })(req, res, next);
+})
+
+// Get /auth/logout
+router.get('/logout', isLoggedIn, (req, res) => {
+    req.logout();
+    // 세션을 지워버리기
+    // req.session.destory();
+    res.redirect('/');
+})
+
+```
+
+<strong>req.session.destory();</strong>는 세션을 지운다. <br>
+(사실 logout시에는 안해도 된다, 다른 세션도 같이 지워진다.)
+
+
+```javascript 
+passport.authenticate('local', (authError, user, info) => {
+```
+이하의 내용과 동일취급하면 된다. <br>
+done ( 에러, 성공, 실패) 가 아래로 전달한다 <br> 
+=done(authError, user, info) => {}
+
 
