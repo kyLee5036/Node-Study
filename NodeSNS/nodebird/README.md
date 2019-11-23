@@ -3,9 +3,12 @@
 + [SNS(NodeBird) 프로젝트 구조 세팅](#SNS(NodeBird)-프로젝트-구조-세팅)
 + [dotenv 사용하기](#dotenv-사용하기)
 + [기본 라우터와 pug 파일 세팅](#기본-라우터와-pug-파일-세팅)
-+ [모델,테이블 만들기](#모델,테이블-만들기)
++ [모델/테이블 만들기](#모델/테이블-만들기)
 + [다대다 관계 이해하기](#다대다-관계-이해하기)
++ [bcrypt 오류해결](#<strong>bcrypt</strong>-오류해결)
 + [passport 세팅과 passportLocal전력](#passport-세팅과-passportLocal전력)
++ [회원가입 구현](#회원가입-구현)
++ [로그인 로그아웃 구현](#로그인-로그아웃-구현)
 
 ## SNS(NodeBird) 프로젝트 구조 세팅
 
@@ -115,6 +118,7 @@ secret: process.env.COOKIE_SECRET,
 ```
 
 ## 기본 라우터와 pug 파일 세팅
+- [제일 위로가기](#nodebird)
 
 #### app.js
 
@@ -220,7 +224,8 @@ module.exports = ( (sequlize, DataTypes) => (
 <strong>provider</strong>는 local과 kakao 구분하기 위해서 ( 그 외에도 구글, 깃허브 구분도 가능)
 
 
-## passport 세팅과 passportLocal전력 
+## 다대다 관계 이해하기
+- [제일 위로가기](#nodebird)
 
 ### 1:1관계, 1:N관계, N:N관계(3가지 경우있음)
 
@@ -326,9 +331,9 @@ db.User.belongsToMany(db.Post, {through: 'Like' });
 db.Post.belongsToMany(db.User, {through: 'Like' });
 ```
 
-## passport 세팅과 passportLocal전력
 
 ### <strong>bcrypt</strong> 오류해결
+- [제일 위로가기](#nodebird)
 
 이거 설치하기 전에 bcrypt가 잘 안될 경우를 설명한다.
 <pre><code>윈도우 검색창 -> powershell -> 관리자 권한 실행
@@ -352,7 +357,8 @@ updated 1 package in 217.964s
 + bcrypt@3.0.7</code></pre>
 
 
-### passport 세팅과 passportLocal전력
+## passport 세팅과 passportLocal전력
+- [제일 위로가기](#nodebird)
 
 <pre><code>npm i passport passport-local passport-kakao</code></pre>
 <pre><code>+ passport-local@1.0.0
@@ -443,4 +449,56 @@ app.use(express.urlencoded({
     extended: false
 }));
 ```
-    
+
+## 회원가입 구현
+- [제일 위로가기](#nodebird)
+
+#### routes/auth.js
+
+```javascript
+const express = require('express');
+const bcrypt = require('bcrypt');
+const { User } = require('../models');
+
+const router = express.Router();
+
+// POST /auth/join (회원가입)
+router.post('/join', async (req, res, next) => {
+    const { email, nick, password} = req.body;
+    try {
+        // 이메일
+        const exUser = await User.find({ where : {email}});
+        if (exUser) {
+            req.flash('joinError', '이미 가입된 이메일입니다');
+            return res.redirect('/join');
+        }
+        // 숫자가 클 수록 비밀번호는 찾기 힘들지만 시간이 느려진다. 비밀번호 시간은 1초가 적당하다.
+        // 적당한 숫자 만들기 
+        console.time('암호화 시간');
+        const hash = await bcrypt.hash(password, 17);
+        console.timeEnd('암호화 시간');
+        // 회원가입하기
+        await User.create({
+            email,
+            nick,
+            password: hash,
+        });
+        return res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+
+})
+
+router.post('/login', (req, res, next) => {
+
+})
+
+module.exports = router;
+
+```
+
+## 로그인 로그아웃 구현
+- [제일 위로가기](#nodebird)
+
