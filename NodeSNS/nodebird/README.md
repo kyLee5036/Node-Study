@@ -339,7 +339,7 @@ db.Post.belongsToMany(db.User, {through: 'Like' });
 <pre><code>윈도우 검색창 -> powershell -> 관리자 권한 실행
 PS C:\WINDOWS\system32> npm i -g windows-build-tools
 
-...내용샹략
+...내용생략
 
 All done!
 
