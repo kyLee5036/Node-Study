@@ -8,9 +8,11 @@ const passport = require('passport');
 require('dotenv').config();
 
 const indexRouter = require('./routes/page');
-// const userRouter = require('./routes/user');
+const authRouter = require('./routes/auth')
+const userRouter = require('./routes/user');
 
-const { sequelize } = require('./models');
+// const { sequelize } = require('./models');
+const sequelize = require('./models').sequelize;
 
 //passport 연결
 const passportConfig = require('./passport');
@@ -50,6 +52,9 @@ app.use(passport.session());
 
 
 app.use('/', indexRouter);
+app.use('/auth', authRouter);
+app.use('/user', userRouter);
+
 
 // 404 에러처리
 app.use((req, res, next) => {

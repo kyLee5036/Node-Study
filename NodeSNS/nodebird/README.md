@@ -9,6 +9,9 @@
 + [passport 세팅과 passportLocal전력](#passport-세팅과-passportLocal전력)
 + [회원가입 구현](#회원가입-구현)
 + [로그인 로그아웃 구현](#로그인-로그아웃-구현)
++ [passport serializeUser/deserializeUser](#passport-serializeUser/deserializeUser)
+
+
 
 ## SNS(NodeBird) 프로젝트 구조 세팅
 
@@ -587,7 +590,39 @@ router.get('/logout', isLoggedIn, (req, res) => {
 passport.authenticate('local', (authError, user, info) => {
 ```
 이하의 내용과 동일취급하면 된다. <br>
-done ( 에러, 성공, 실패) 가 아래로 전달한다 <br> 
+done ( 에러, 성공, 메세지) 가 아래로 전달한다 <br> 
 =done(authError, user, info) => {}
 
+
+## passport <strong>serializeUser/deserializeUser</strong>
+
+이걸 잘 사용하면 무리하게 메모리를 낭비하지 않게 된다!!<br> 
+
+routes/auth.js에서 req.login시에 serializeUser호출 -> 
+req.user(유저정보)은 세션에 저장 -><br> 
+passport/index.js user를 저장한다.<br>
+보충설명) 유저가 100만명이라면 인원이 많아서 유저와 (아이디, 비밀번호, 이름, 나이, 결혼여부 등) 같은 것을 세션에 전부 저장하지 못한다. 그래서 유저 정보중에서 <strong>아이디</strong>만 저장한다. 바로 밑에 <strong>serializeUser</strong>를 사용한다.
+
+```javascript
+// { id: LEE, name : 하하하하, age: 26, 결혼여부 : 미혼} -> 여기서 id 1번만 가져온다
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+```
+req.login시에 serializeUser 호출 -> 유저 정보 중 아이디만 세션에 저장한다.
+<br><br>
+
+정보를 전해주면서 app.js에서 passport.session()가 실행하면서 deserializeUser가 실행된다.  
+```javascript
+// 메모리에 id의 LEE 저장 -> { id: LEE, name : 하하하하, age: 26, 결혼여부 : 미혼} 유정정보를 보여준다.(req.user)
+passport.deserializeUser((id, done) => {
+    User.find({ where : id }) // LEE ->  DB정보 -> req.user
+    .then(user => done(null, user))
+    .catch(error => done(error));
+})
+
+```
+매 요청 시마다 passport.session() 여기서 deserializeUser가 실행. User.id를 DB조회 후 req.user로 간다.<br>
+<strong>deserializeUser</strong>는 모든 요청에 실행되기 때문에 DB 조회를 캐싱해서 효율적으로 만들어야 한다.
 
