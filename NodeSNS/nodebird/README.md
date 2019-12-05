@@ -626,3 +626,4 @@ passport.deserializeUser((id, done) => {
 매 요청 시마다 passport.session() 여기서 deserializeUser가 실행. User.id를 DB조회 후 req.user로 간다.<br>
 <strong>deserializeUser</strong>는 모든 요청에 실행되기 때문에 DB 조회를 캐싱해서 효율적으로 만들어야 한다.
 
+> 실행이 안되는데 아무래도 경로의 문제가 있어서 하고싶으면, 제로초님의 소스를 다운 받아서 할 것. 이제 여기서부터는 내용정리만 하겠음.
