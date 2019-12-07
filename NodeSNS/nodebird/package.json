@@ -4,7 +4,6 @@
   "description": "익스프레스로 만드는 SNS 서비스",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app"
   },
   "author": "LEEKY",
