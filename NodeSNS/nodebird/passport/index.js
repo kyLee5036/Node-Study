@@ -16,7 +16,7 @@ module.exports = (passport) => {
 
 
     local(passport);
-    // kakao(passport)
+    kakao(passport)
 }
 
 

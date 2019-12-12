@@ -11,6 +11,7 @@
 + [로그인 로그아웃 구현](#로그인-로그아웃-구현)
 + [passport serializeUser/deserializeUser](#passport-serializeUser/deserializeUser)
 + [카카오 로그인하기_passport_kakao](#카카오-로그인하기_passport_kakao)
++ [카카오 앱 등록 & 실행 & 디버깅](#카카오-앱-등록-&-실행-&-디버깅)
 
 
 
@@ -625,7 +626,20 @@ passport.deserializeUser((id, done) => {
 
 ```
 매 요청 시마다 passport.session() 여기서 deserializeUser가 실행. User.id를 DB조회 후 req.user로 간다.<br>
-<strong>deserializeUser</strong>는 모든 요청에 실행되기 때문에 DB 조회를 캐싱해서 효율적으로 만들어야 한다.
+<strong>deserializeUser</strong>는 모든 요청에 실행되기 때문에 DB 조회를 캐싱해서 효율적으로 만들어야 한다.<br><br>
+
+
+```js 
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+passport.deserializeUser((id, done) => {
+User.find({ where: { id } })
+    .then(user => done(null, user))
+    .catch(err => done(err));
+});
+```
+나중에 이렇게 바꿔준다. 왜냐하면, 카카오 로그인 시 처음에 보면 빈배열로 리턴해주기 떄문에 카카오로그인을 해도 로그인 처리가 안되기 떄문에 코드 수정할 것!!
 
 > 실행이 안되는데 아무래도 경로의 문제가 있는데 아무래도, 시퀄라이저 버전이 달라서 오류가 날 수도 있다. 시퀄라이즈 버전을 체크잘하기. find를 사용했는데 5버전인가? 거기에서는 findOne을 사용하였다.
 
@@ -656,7 +670,7 @@ passport.deserializeUser((id, done) => {
 router.get('/kakao', password.authenticate('kakao'));
 
 // 실행순서 **3**
-// kakaoStagey에서 callback이랑 일치해야한다.
+// KakaoStrategy에서 callback이랑 일치해야한다.
 // 그런 다음 kakao/callback에 들어간다.
 router.get('/kakao/callback', password.authenticate('kakao', {
   // 옵션 설정
@@ -668,7 +682,7 @@ router.get('/kakao/callback', password.authenticate('kakao', {
 module.exports = router;
 ```
 
-#### kakaoSttategy.js
+#### KakaoStrategy.js
 소셜네트워트 ID를 가져올 떄 회원가입이 절차가 없다. 소셜네트워크에서 정보를 받아와서 디비에 저장한다.<br>
 ```js
 const KakaoStrategy = require('passport-kakao').Strategy;
@@ -719,3 +733,11 @@ module.exports = (passport) => {
 }
 ```
 
+## 카카오 앱 등록 & 실행 & 디버깅
+<pre><code>설정 -> 일반 -> 플랫폼추가 -> 도메인에서 일단 localhost도에인으로 설정 -> 
+Redirect Path도 /auth/kakao/callback 설정해줘야한다. 
+(KakaoStrategy에서 callback이랑 똑같이 적어줘야한다.)</code></pre>
+>Incorrect string value: '\xEC\x98\x81\xEC\x9D\xB4' for column 'nick' at row 1 <br>
+
+이런 오류가 나올텐데, 시퀄라이즈 디비문제라서 한글 세팅을 활성화하신 후 테이블을 다시 생성해야한다.<br>
+일단, 나중에 다시 배포할 떄쯤에 다시 설정할 거라서 일단 패스한다.

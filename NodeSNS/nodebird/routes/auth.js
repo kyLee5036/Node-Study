@@ -55,11 +55,11 @@ router.get('/logout', isLoggedIn, (req, res) => {
     res.redirect('/');
 });
 
-router.get('/kakao', password.authenticate('kakao'));
+router.get('/kakao', passport.authenticate('kakao'));
 
-router.get('/kakao/callback', password.authenticate('kakao', {
-  failureRedirect : '/', // 카카오 로그인 실패 했을 때 메인 라운터로 이동
-}), (res, req) => {
+router.get('/kakao/callback', passport.authenticate('kakao', {
+  failureRedirect: '/', // 카카오 로그인 실패 했을 때 메인 라운터로 이동
+}), (req, res) => {
   // 카카오 로그인 성공했을 때 메인 라우터로 이동
   res.redirect('/');
 });
