@@ -10,7 +10,7 @@
 + [회원가입 구현](#회원가입-구현)
 + [로그인 로그아웃 구현](#로그인-로그아웃-구현)
 + [passport serializeUser/deserializeUser](#passport-serializeUser/deserializeUser)
-+ 카카오 로그인하기_passport_kakao
++ [카카오 로그인하기_passport_kakao](#카카오-로그인하기_passport_kakao)
 
 
 
@@ -627,9 +627,95 @@ passport.deserializeUser((id, done) => {
 매 요청 시마다 passport.session() 여기서 deserializeUser가 실행. User.id를 DB조회 후 req.user로 간다.<br>
 <strong>deserializeUser</strong>는 모든 요청에 실행되기 때문에 DB 조회를 캐싱해서 효율적으로 만들어야 한다.
 
-> 실행이 안되는데 아무래도 경로의 문제가 있어서 하고싶으면, 제로초님의 소스를 다운 받아서 할 것. 이제 여기서부터는 내용정리만 함.
+> 실행이 안되는데 아무래도 경로의 문제가 있는데 아무래도, 시퀄라이저 버전이 달라서 오류가 날 수도 있다. 시퀄라이즈 버전을 체크잘하기. find를 사용했는데 5버전인가? 거기에서는 findOne을 사용하였다.
 
 ## 카카오 로그인하기_passport_kakao 
 
++ 카카오 로그인에서는 회원가입이 따로 없다. 카카오 로그인 된 사람만 사용가능!!
++ 카카오 로그인 할 경우에는 이메일 로그인을 안하고, 카카오에 있는 정보의 내용을 가지고 토큰기반으로 로그인한다 (SNS기반으로 한다)
++ 로그인은 카카오가 대신 처리해주지만, 우리 디비에도 사용자를 저장한다 ( snsId, provider을 사용)
+    
+<pre><code><strong>앱 만들기 전에 진행 절차</strong>
+카카오 개발자 로그인 -> 내 애플리케이션 -> 
+앱 만들기 -> 앱 이름(자기 맘대로설정) 회사 이름(자기 마음대로 설정) -> 
+생성 -> 네이티브 앱 키, REST API키, JavaScript 키, Admin키가 표시 -> 여기서 REST API키를 사용
+</code></pre>
 
+순서는 (실행순서 보면 된다.) <br>
+1. /auto/kakao <br>
+2. 카카오 로그인 <br>
+3. /auto/kakao/callback으로 프로필 반환 <br>
+
+
+#### auth.js
+```js
+...위 생략
+
+// 실행순서 **1**
+// 여기에서 카카오에서 요청하면 kakaoStrategy가 실행되서 카카오 서버가 우리 서버 대신에 로그인을 해준다
+router.get('/kakao', password.authenticate('kakao'));
+
+// 실행순서 **3**
+// kakaoStagey에서 callback이랑 일치해야한다.
+// 그런 다음 kakao/callback에 들어간다.
+router.get('/kakao/callback', password.authenticate('kakao', {
+  // 옵션 설정
+  failureRedirect : '/', // 카카오 로그인 실패 했을 때 메인 라운터로 이동
+}), (res, req) => {
+  res.redirect('/'); // 카카오 로그인 성공했을 때 메인 라우터로 이동
+});
+
+module.exports = router;
+```
+
+#### kakaoSttategy.js
+소셜네트워트 ID를 가져올 떄 회원가입이 절차가 없다. 소셜네트워크에서 정보를 받아와서 디비에 저장한다.<br>
+```js
+const KakaoStrategy = require('passport-kakao').Strategy;
+const { User } = require('../models');
+
+// 실행순서 **2**
+module.exports = (passport) => {
+  passport.use(new KakaoStrategy( {
+    clientID: process.env.KAKAO_ID, // 카카오 앱 아이디
+    callbackURL : '/auto/kakao/callback', // 카카오 리다이렉트 주소
+
+  // 실행순서 **4**
+  // 인증이 완료되면 콜백함수가 실행이 된다. 
+// 여기에서는 디비에다가 카카오로그인들을 저장해줄 거다
+  }, async (accessToke, refreshToken, profile, done) => {
+    
+    // 카카오 회원있는지 확인 여부
+    try {
+      const exUser = await User.find({
+        where : {
+          // profile,id에 snsID가 들어있다.
+          snsId: profile.id,
+          provider: 'kakao',
+        },
+      });
+      // 디비에 카카오 회원이 확인 여부
+      if (exUser) {
+        done(null, exUser);
+      } else {
+        // 궁금하면 console.log해보자!!
+        // 여기에서 profile의 양식들은 카카오에서 만들어 진 것이다.
+        console.log(profile);
+        // 디비에 카카오 회원이 없으면 디비에 저장
+        const newUser = await User.create({
+          email: profile._json && profile._json.kaccount_email,
+          nick: profile.displayName,
+          snsId: profile.id,
+          // provider는 kakao, facebook, github 어떤 회사 것인지 구분하기 위해서 넣어주었다.
+          provider: 'kakao',
+        });
+        done(null, newUser);
+      }
+    } catch (error) {
+      console.error(error);
+      done(error);
+    }
+  }))
+}
+```
 

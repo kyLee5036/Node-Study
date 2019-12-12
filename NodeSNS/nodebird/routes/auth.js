@@ -2,7 +2,6 @@ const express = require('express');
 const passport = require('passport');
 const bcrypt = require('bcrypt');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares');
-// const { User } = require('../models');
 const { User } = require('../models');
 
 const router = express.Router();
@@ -54,6 +53,15 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
 router.get('/logout', isLoggedIn, (req, res) => {
     req.logout();
     res.redirect('/');
-})
+});
+
+router.get('/kakao', password.authenticate('kakao'));
+
+router.get('/kakao/callback', password.authenticate('kakao', {
+  failureRedirect : '/', // 카카오 로그인 실패 했을 때 메인 라운터로 이동
+}), (res, req) => {
+  // 카카오 로그인 성공했을 때 메인 라우터로 이동
+  res.redirect('/');
+});
 
 module.exports = router;
