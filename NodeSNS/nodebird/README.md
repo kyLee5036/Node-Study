@@ -12,6 +12,7 @@
 + [passport serializeUser/deserializeUser](#passport-serializeUser/deserializeUser)
 + [카카오 로그인하기_passport_kakao](#카카오-로그인하기_passport_kakao)
 + [카카오 앱 등록 & 실행 & 디버깅](#카카오-앱-등록-&-실행-&-디버깅)
++ [multer로 이미지 업로드하기](#multer로-이미지-업로드하기)
 
 
 
@@ -741,3 +742,115 @@ Redirect Path도 /auth/kakao/callback 설정해줘야한다.
 
 이런 오류가 나올텐데, 시퀄라이즈 디비문제라서 한글 세팅을 활성화하신 후 테이블을 다시 생성해야한다.<br>
 일단, 나중에 다시 배포할 떄쯤에 다시 설정할 거라서 일단 패스한다.
+
+
+## multer로 이미지 업로드하기
+
+<pre><code>D:\_Node.js\_NodeStudy_inflearn\Node-Study\NodeSNS\nodebird>npm i multer
++ multer@1.4.2</code></pre>
+ 
+### html 설정
+이미지를 업로드하려면 <strong>form에서 multipart/form-data</strong>로, 그리고 이 것을 해석하려면 multer가 필요하다!!!<br> 
+그래서 <strong>multer을 추가 설치</strong>를 하였다.<br>
+```html 
+<form id="twit-form" action="/post" method="post" enctype="multipart/form-data"></form>
+```
+
+게시글용 라우터 : post.js
+
+### 기본설정
+```js
+const express = require('express');
+const multer = require('multer'); // multer를 생성
+const path = require('path'); // 경로 생성
+router.post('/'); // 게시글 업로드
+router.get('/img'); // 이미지 업로드 (먼저 이미지 업로드 설명한다.)
+module.exports = router;
+```
+multer, path을 설정해주고, 게시글, 사진업로드를 만들어준다. 
+
+### multer 옵션 셜정 방법
+multer함수 안에서는 여러가지 옵션을 넣을 수가 있다.
+```js
+
+const upload = multer({
+  storage: multer.diskStorage({  
+    destination(req, file, cb) { // 파일경로
+      cb(null, 'uploads/'); // uploads에 파일경로 설정
+    },
+    // multer에서 확장자랑 파일명은 직접 정해줘야한다.
+    filename(req, file, cb){ // 파일명
+      const ext = path.extname(file.originalname); // 확장자 설정, path.extname() 모르면 path강의 보기
+      cb(null, path.basename(file.originalname, ext) + new Date().valueOf() + ext); // basename은 파일명
+      // 해석 : 파일명에 현재시간을 넣어주고, 확장자를 넣어준다. 현재시간 넣어주는 것은 중복을 막기위해서 사용한다.
+      // 파일명 + 현재시각 + 확장자   ex) 파일명ex20190101.jpg 
+    },
+  }),
+  limit : { fileSize : 5 * 1024 * 1024} , // 파일 사이즈 (바이트 단위)
+});
+```
+diskStorage는 서버에 이미지를 저장한다. 이미지 저장하는 곳에 있어서 (서버, 외부저장소(구글, AWS))가 있다.<br>
+destination : 파일경로<br>
+filename : 파일명<br>
+cb(에러, 결괏값);<br>
+limit : 파일 사이즈 지정<br>
+
+### 이미지 업로드 하는 라우터
+```js
+router.get('/img', upload.single('img'), (req, res) => { 
+  // img를 실행하고 난 후에 (req, res)를 실행한다. 그리고 json를 프론트화면에 값을 넘겨준다.
+  // 여기에서 '/img'의 의미는 <input id="img" type="file" accept="image/*">에서 id의 img이다
+  console.log(req.file);
+  res.json({url: `/img/${req.file.filename}`});
+});
+```
+이미지 업로드 저장부분은 multer에서 req.body가 아니라 req.file에 저장한다.<br>
+single : 이미지 하나 (필드명)<br>
+array : 이미지 여러 개 (단일 필드)<br>
+fields : 이미지 여러 개 (여러 필드)<br>
+none : 이미지 없음
+
+#### post.js
+```js
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+
+const router = express.Router();
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination(req, file, cb) {
+      cb(null, 'uploads/');
+    },
+    filename(req, file, cb) {
+      const ext = path.extname(file.originalname);
+      cb(null, path.basename(file.originalname, ext) + new Date().valueOf() + ext);
+    },
+  }),
+  limit: {
+    fileSize: 5 * 1024 * 1024
+  },
+});
+
+router.get('/img', upload.single('img'), (req, res) => {
+  console.log(req.file);
+  res.json({
+    url: `/img/${req.file.filename}`
+  });
+});
+
+router.post('/');
+
+module.exports = router;
+```
+
+## 게시글 업로드 구현하기
+참고) multer로 이미지 업로드하기 내용이 연결되어 있음
+
+
+### 게시글 업로드 하는 라우터
+```js
+// 게시글 업로드 하는 라우터
+router.post('/');
+```
