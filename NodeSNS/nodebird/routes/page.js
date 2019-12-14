@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Post, User } = require('../models');
 
 const { isLoggedIn, isNotLoggedIn} = require('./middlewares')
 
@@ -23,11 +24,26 @@ router.get('/join', isNotLoggedIn, (req, res) => {
 
 // 메인 페이지
 router.get('/', (req, res, next) => {
-    res.render('main', {
-        title: 'NodeBird',
-        twits: [],
-        user: req.user,
-        loginError: req.flash('loginError'), //일회성 메세지들 보여주기위해 에러 넣음
+    // Post에서 모든 것을 찾으면서 게시글 작성자 모델과 include로 연결해주고  
+    Post.findAll({
+        include: {
+            model : User,
+            attributes: ['id', 'nick'], // 아이디랑 닉네임의 값을 가져온다.
+        },
+    })
+    // 정보가 posts에 담겨서 twits에 post를 해준다.
+    // 렌더링할 떄 사용자와 게시글들이랑 같이 렌더링한다.
+    .then((posts) => {
+        res.render('main', {
+            title: 'NodeBird',
+            twits: posts,
+            user: req.user,
+            loginError: req.flash('loginError'), //일회성 메세지들 보여주기위해 에러 넣음
+        })
+    })
+    .catch((error) => {
+        console.error(error);
+        next(error);
     })
 });
 

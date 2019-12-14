@@ -10,8 +10,8 @@ require('dotenv').config();
 const indexRouter = require('./routes/page');
 const authRouter = require('./routes/auth')
 const userRouter = require('./routes/user');
+const postRouter = require('./routes/post');
 
-// const { sequelize } = require('./models');
 const sequelize = require('./models').sequelize;
 
 //passport 연결
@@ -54,6 +54,7 @@ app.use(passport.session());
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
+app.use('/post', postRouter);
 
 
 // 404 에러처리

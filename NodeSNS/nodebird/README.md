@@ -13,6 +13,7 @@
 + [카카오 로그인하기_passport_kakao](#카카오-로그인하기_passport_kakao)
 + [카카오 앱 등록 & 실행 & 디버깅](#카카오-앱-등록-&-실행-&-디버깅)
 + [multer로 이미지 업로드하기](#multer로-이미지-업로드하기)
++ 게시글 업로드 구현하기
 
 
 
@@ -29,7 +30,7 @@
 <pre><code><strong>npm i -g sequlize-cli</strong> 
 + sequelize-cli@5.5.1
 </code></pre>
-시퀄라이즈라이는 명령어 사용가능
+시퀄라이즈라는 명령어 사용가능
 
 <pre><code><strong>npm i sequelize mysql2</strong>
 + mysql2@2.0.0
@@ -850,7 +851,120 @@ module.exports = router;
 
 
 ### 게시글 업로드 하는 라우터
+
+#### post.js
+게시글 업로드 시에는 none을 사용한다. ( none : 사진없음 ) <br>
+
 ```js
-// 게시글 업로드 하는 라우터
-router.post('/');
+const {Post, Hashtag} = require('../models'); // 추가를 해준다
+... 위 생략
+
+const upload2 = multer(); // 게시글 업로드 하는 라우터
+// 게시글 업로드 처리
+router.post('/', upload2.none(), async (req, res, next) => {
+  try {
+    // 게시글 생성
+    const post = await Post.create({
+      content: req.body.content,
+      img: req.body.url, // 이미지는 이미지 주소를 받아온다.
+      userId: req.user.id, // userID는 게시글 작성하면 게시글 작성자이다.
+    });
+    // 해시태그를 가져오는 정규표현식
+    const hashtags = req.body.content.match(/#[^\s#]*/g);
+    if (hashtags) {
+      const result = await Promise.all(hashtags.map(tag => Hashtag.findOrCreate({
+        where: {
+          title: tag.slice(1).toLowerCase()
+        },
+      })));
+      await post.addHashtags(result.map(r => r[0]));
+    }
+    res.redirect('/');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+```
+
+```js
+... 위 생략
+if (hashtags) {
+      // 해시태그들을 해시태그 테이블에 넣어준다.
+      // 안녕하세요 #노드 #익스프레스 => hashtages = ['#노드', '#익스프레스'] 테이블에 데이터가 들어간다.
+      // 해시태그 테이블에 데이터를 추가해주기 위해서, map과 Promise.all를 사용해서 값들을 넣어줄 것이다.
+      const result = await Promise.all(hashtags.map(tag => Hashtag.findOrCreate({
+        where: {
+          title: tag.slice(1).toLowerCase() 
+          // slice(1) : '#'표시들은 제거, toLowerCase() : 대문자를 소문자를 바꿔준다.(검색을 할 때 대소문자 구별 안할려고 사용)
+        },
+      })));
+      // 해스태그 내용을 추가하면 관계설정해준다. 
+      // 즉, 해시태그들을 연결해주는 것인데, 해새태그 아이디을 넣어주면 자동으로 다대다 관계로 맺어준다.
+      await post.addHashtags(result.map(r => r[0]));
+...이하 생략
+```
+
+<strong>findeOrCreate</strong> : DB에 있으면 찾고 없으면 새로 생성한다. <br>
+여기서 중복된 것은 어떻게 되냐? 중복되는 거 있으면 하나만 찾고, 중복되지 않은 것은 테이블에 데이터를 추가한다.<br>
+<strong>A.getB</strong> : 관계있는 로우 조회<br>
+<strong>A.addB</strong> : 관계 생성<br>
+<strong>A.setB</strong> : 관계 수정<br>
+<strong>A.removeB</strong> : 관계 제거<br>
+
+여기까지 실행하면 화면에 표시가 안되어서 <strong>화면이 표시</strong>되도록 하기위해서 코드 수정이 있다.<br>
+
+#### page.js 수정 전
+```js 
+// 메인 페이지
+router.get('/', (req, res, next) => {
+    res.render('main', {
+        title: 'NodeBird',
+        twits: [], // 빈배열이 되어있다. 여기에서 바꿔줘야한다.
+        user: req.user,
+        loginError: req.flash('loginError'), //일회성 메세지들 보여주기위해 에러 넣음
+    })
+});
+```
+
+#### page.js 수정 후
+```js 
+// 메인 페이지
+router.get('/', (req, res, next) => {
+    // Post에서 모든 것을 찾으면서 게시글 작성자 모델과 include로 연결해주고  
+    Post.findAll({
+        include: {
+            model : User,
+            attributes: ['id', 'nick'], // 아이디랑 닉네임의 값을 가져온다.
+        },
+    })
+    // 정보가 posts에 담겨서 twits에 post를 해준다.
+    // 렌더링할 떄 사용자와 게시글들이랑 같이 렌더링한다.
+    .then((posts) => {
+        res.render('main', {
+            title: 'NodeBird',
+            twits: posts,
+            user: req.user,
+            loginError: req.flash('loginError'), //일회성 메세지들 보여주기위해 에러 넣음
+        })
+    })
+    .catch((error) => {
+        console.error(error);
+        next(error);
+    })
+});
+```
+
+#### views/main.pug
+
+main.pug 오류문제가 있어서 수정한다.
+
+수정 전
+```js
+-const follow = user && user.Followings.map(f => f.id).includes(twit.user.id);
+```
+
+수정 후
+```js
+-const follow = user && twit && twit.Liker && twit.Liker.map(f => f.id).includes(twit.user.id);
 ```
