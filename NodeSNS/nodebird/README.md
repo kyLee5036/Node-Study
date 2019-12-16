@@ -15,6 +15,7 @@
 + [multer로 이미지 업로드하기](#multer로-이미지-업로드하기)
 + [게시글 업로드 구현하기](#게시글-업로드-구현하기)
 + [해시태그 검색 & 팔로잉 구현 & 마무리](#해시태그-검색-&-팔로잉-구현-&-마무리)
++ [팔로잉 취소, 프로필 수정](#팔로잉-취소,-프로필-수정)
 
 
 
@@ -1061,3 +1062,72 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
 
 <pre><code>equelizeEagerLoadingError: user is associated to user multiple times. To identify the correct association, you must use the 'as' keyword to specify the alias of the association you want to include.</code></pre>
 > 오류메세지인데, 여기서 'as' 쪽에서 철자나 내용물이 틀렸다는 것이다.
+
+## 팔로잉 취소, 프로필 수정
+
+### 팔로잉 취소
+#### views/main.put
+
+```js
+if user && user.id !== twit.user.id && !follow
+  button.twit-follow 팔로우하기
+else if user && user.id !== twit.user.id && follow // 팔로잉을 했다면
+  button.twit-follow 팔로워끊기 // '팔로워끊기'버튼을 보여준다.
+```
+
+```js
+...위 생략
+
+router.post('/:id/unfollow', isLoggedIn, async (req, res, next) => {  
+  try {
+    const user = await User.findOne({ where: { id: req.user.id } });
+    console.log(user);
+    await user.removeFollowing(parseInt(req.params.id, 10)); // 관계제거하기위해서 remove를 사용한다
+    res.send('success');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+```
+
+### 프로필 수정
+
+#### routes/page.js
+
+실행하면 user에 null가 정의되어있다. user부분에 수정해야한다.
+```js
+// 프로필 페이지
+router.get('/profile', isLoggedIn, (req, res) => {
+    res.render('profile', {
+        title: '내 정보 - NodeBird', 
+        user: req.user,
+    })
+});
+```
+> 항상 에러가 나면, 에러 나오는 라우터를 자세하게 봐야한다.
+
+#### views/profile.pug
+```js
+form#profile-form(method="post", action="/user/profile")
+  input(name='nick')
+  button 닉네임 수정
+```
+위와 같이 내용추가를 해준다.
+
+#### routes/user.js
+```js
+// 프로필 변경 기능
+router.post('/profile', async ( req, res, next) => {
+  try {
+    await User.update({ nick: req.body.nick }, {
+      where: {id: req.user.id},
+    });
+    res.redirect('/');
+  } catch ( error) {
+    console.error(error);
+    next(error);
+  }
+});
+```
+위와 같이 내용 추가
