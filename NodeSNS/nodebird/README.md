@@ -14,6 +14,7 @@
 + [카카오 앱 등록 & 실행 & 디버깅](#카카오-앱-등록-&-실행-&-디버깅)
 + [multer로 이미지 업로드하기](#multer로-이미지-업로드하기)
 + [게시글 업로드 구현하기](#게시글-업로드-구현하기)
++ [해시태그 검색 & 팔로잉 구현 & 마무리](#해시태그-검색-&-팔로잉-구현-&-마무리)
 
 
 
@@ -968,3 +969,95 @@ main.pug 오류문제가 있어서 수정한다.
 ```js
 -const follow = user && twit && twit.Liker && twit.Liker.map(f => f.id).includes(twit.user.id);
 ```
+
+
+## 해시태그 검색 & 팔로잉 구현 & 마무리
+
+### 해시태그 검색
+#### routes/post.js
+```js
+// 해시태그 검색
+router.get('/hashtag', async(req, res, next) => {
+  const query = req.query.hashtag; // 해시태그 검색창에 입력하는 것
+  if(!query) { // 아무것도 입력안하면
+    return res.redirect('/'); // 기본페이지 보여준다.
+  }
+  try {
+    const hashtag = await Hashtag.findOne({ where: { title: query } });
+    let post = []; // 빈 배열안에다가 정보들을 넣어줄 것이다.
+    if (hashtag) {  // 해시태그에 입력된 값이 있으면
+      posts = await hashtag.getPosts({ include: [{ model: User }] });
+       // 해당하는 정보를 다 가져온다. 그리고 사용자 아이디의 정보도 가져온다
+    }
+    return res.render('main', {
+      title: `${query} | NodeBird`,
+      user: req.user,
+      twits: posts, // 위에 있는 배열들을 twits에 데이터들을 넣어준다.
+    });
+
+  } catch (error) {
+    console.error(error)
+    next(error);
+  }
+})
+```
+
+### 팔로잉 구현
+#### routes/post
+
+```js
+// 팔로워는 로그인 한 사람만 하게한다.
+router.post('/:id/follow', isLoggedIn, async (req, res, next) => {  try {
+    const user = await User.findOne({ where: { id: req.user.id } }); // 현재 로그인 한 사람을 찾는다.
+    console.log(user); // 잠깐 404에러 나와서 검색
+    await user.addFollowing(parseInt(req.params.id, 10)); // 나에 팔로잉 대상으로 추가를 한다.
+    res.send('success');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+```
+A.addB : 관계생성<br>
+
+#### passport/index.js
+```js
+...위 생략
+passport.deserializeUser((id, done) => {
+  User.findOne({ 
+      where: { id },
+      // Followers랑 Followings은 middlewares.js의 정보를 들고온는 것이다.
+      include: [{
+          // 팔로워 데이터를 가져온다.
+          model: User,
+          attributes: ['id', 'nick'], // 속성 : 아이디, 닉네임
+          as: 'Followers',
+      }, {
+          // 팔로잉 데이터를 가져온다.
+          model: User,
+          attributes: ['id', 'nick'],
+          as: 'Followings',
+      }]
+  })
+    .then(user => done(null, user))
+    .catch(err => done(err));
+});
+...아래 생략
+```
+### 마무리
+#### routes/post.js
+이미지업로드, 게시글은 회원들만 가능하게 해주기위해서, isLoggedIn을 추가해주었다.
+```js
+const {isLoggedIn} = require('./middlewares');
+...아래 생략
+
+router.post('/img', isLoggedIn, upload.single('img'), (req, res) => {
+  ...이하 생략
+}
+router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
+   ...이하 생략
+}
+```
+
+<pre><code>equelizeEagerLoadingError: user is associated to user multiple times. To identify the correct association, you must use the 'as' keyword to specify the alias of the association you want to include.</code></pre>
+> 오류메세지인데, 여기서 'as' 쪽에서 철자나 내용물이 틀렸다는 것이다.

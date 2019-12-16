@@ -27,7 +27,11 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('port', process.env.PORT || 8001);
 
 app.use(morgan('dev'));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'))); // /main.css 요렇게
+// 이미지 폴더를 저장하기 위해서 정적 폴더를 만든다. 
+// 하지만, ,직접배포할 때에는 여기에 저장하지 않고, AWS의 S3에 저장을 할 것이다.
+app.use('/img', express.static(path.join(__dirname, 'uploads'))); // /uploads/abc.png
+
 app.use(express.json());
 app.use(express.urlencoded({
     extended: false
