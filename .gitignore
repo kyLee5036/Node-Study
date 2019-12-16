@@ -93,3 +93,9 @@ public/
 
 # DynamoDB Local files
 .dynamodb/
+
+uploads
+.uploads/
+
+vscode
+.vscode/
