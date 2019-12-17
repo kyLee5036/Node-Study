@@ -79,4 +79,29 @@ router.get('/hashtag', async(req, res, next) => {
   }
 })
 
+// 좋아요 버튼
+router.post('/:id/like', async (req, res, next) => {
+  try {
+    // 게시물에 유저가 좋아요 할 수 있도록한다.
+    const post = await Post.findOne({ where: {id: req.params.id}});
+    await post.addLiker(req.user.id);
+    res.send('OK');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+// 좋아요 취소 버튼
+router.delete('/:id/like', async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: {id: req.params.id}});
+    await post.addLiker(req.user.id);
+    res.send('OK');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
 module.exports = router;

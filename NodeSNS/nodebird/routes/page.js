@@ -26,14 +26,22 @@ router.get('/join', isNotLoggedIn, (req, res) => {
 router.get('/', (req, res, next) => {
     // Post에서 모든 것을 찾으면서 게시글 작성자 모델과 include로 연결해주고  
     Post.findAll({
-        include: {
+        include: 
+        [{  // 구분 : 작성자
             model : User,
             attributes: ['id', 'nick'], // 아이디랑 닉네임의 값을 가져온다.
-        },
+        }, {
+            // 구분 : 좋아요 누른 사람
+            // include에서 같은 모델이 여러 개이면 as로 구분한다.
+            model: User,
+            attributes:['id', 'nick'],
+            as: 'Liker' // as로 구분하니까 models/index.js도 구분해준다.
+        }]
     })
     // 정보가 posts에 담겨서 twits에 post를 해준다.
     // 렌더링할 떄 사용자와 게시글들이랑 같이 렌더링한다.
     .then((posts) => {
+        console.log(posts);
         res.render('main', {
             title: 'NodeBird',
             twits: posts,

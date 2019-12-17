@@ -32,5 +32,8 @@ db.User.belongsToMany(db.User, {
   foreignKey: 'followerId'
 }); // 팔로잉으로 결정
 
+db.User.belongsToMany(db.Post, {through: 'Like' });
+db.Post.belongsToMany(db.User, {through: 'Like' ,as: 'Liker'});
+
 
 module.exports = db;

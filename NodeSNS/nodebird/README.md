@@ -16,10 +16,12 @@
 + [게시글 업로드 구현하기](#게시글-업로드-구현하기)
 + [해시태그 검색 & 팔로잉 구현 & 마무리](#해시태그-검색-&-팔로잉-구현-&-마무리)
 + [팔로잉 취소, 프로필 수정](#팔로잉-취소,-프로필-수정)
++ [좋아요, 좋아요 취소](#좋아요,-좋아요-취소)
 
 
 
 ## SNS(NodeBird) 프로젝트 구조 세팅
+[위로 올라가기](#nodebird)
 
 #### package.json
 ```javascript 
@@ -100,6 +102,7 @@ app.listen(app.get('port'), () => {
 
 
 ## dotenv 사용하기
+[위로 올라가기](#nodebird)
 
 dotenv(.env)파일은 비밀파일이다. (절대로 온라인에 올리면 안된다.!!!)<br>
 비밀번호를 다 .env파일에 적어두고 관리를 조심스럽게 하면 된다.
@@ -127,7 +130,7 @@ secret: process.env.COOKIE_SECRET,
 ```
 
 ## 기본 라우터와 pug 파일 세팅
-- [제일 위로가기](#nodebird)
+[위로 올라가기](#nodebird)
 
 #### app.js
 
@@ -161,6 +164,7 @@ app.use((err, req, res, next) => {
 page.js에서 참고
 
 ## 모델/테이블 만들기
+[위로 올라가기](#nodebird)
 
 -> 테이블 : models에다가 파일을 만든다. <br>
 models의 테이블 정의
@@ -234,7 +238,7 @@ module.exports = ( (sequlize, DataTypes) => (
 
 
 ## 다대다 관계 이해하기
-- [제일 위로가기](#nodebird)
+[위로 올라가기](#nodebird)
 
 ### 1:1관계, 1:N관계, N:N관계(3가지 경우있음)
 
@@ -342,7 +346,7 @@ db.Post.belongsToMany(db.User, {through: 'Like' });
 
 
 ### <strong>bcrypt</strong> 오류해결
-- [제일 위로가기](#nodebird)
+[위로 올라가기](#nodebird)
 
 이거 설치하기 전에 bcrypt가 잘 안될 경우를 설명한다.
 <pre><code>윈도우 검색창 -> powershell -> 관리자 권한 실행
@@ -367,7 +371,7 @@ updated 1 package in 217.964s
 
 
 ## passport 세팅과 passportLocal전력
-- [제일 위로가기](#nodebird)
+[위로 올라가기](#nodebird)
 
 <pre><code>npm i passport passport-local passport-kakao</code></pre>
 <pre><code>+ passport-local@1.0.0
@@ -460,7 +464,7 @@ app.use(express.urlencoded({
 ```
 
 ## 회원가입 구현
-- [제일 위로가기](#nodebird)
+[위로 올라가기](#nodebird)
 
 #### routes/auth.js
 
@@ -509,7 +513,7 @@ module.exports = router;
 ```
 
 ## 로그인 로그아웃 구현
-- [제일 위로가기](#nodebird)
+[위로 올라가기](#nodebird)
 
 #### routes/middlewares.js
 ```javascript
@@ -601,6 +605,7 @@ done ( 에러, 성공, 메세지) 가 아래로 전달한다 <br>
 
 
 ## passport <strong>serializeUser/deserializeUser</strong>
+[위로 올라가기](#nodebird)
 
 이걸 잘 사용하면 무리하게 메모리를 낭비하지 않게 된다!!<br> 
 
@@ -648,6 +653,7 @@ User.find({ where: { id } })
 > 실행이 안되는데 아무래도 경로의 문제가 있는데 아무래도, 시퀄라이저 버전이 달라서 오류가 날 수도 있다. 시퀄라이즈 버전을 체크잘하기. find를 사용했는데 5버전인가? 거기에서는 findOne을 사용하였다.
 
 ## 카카오 로그인하기_passport_kakao 
+[위로 올라가기](#nodebird)
 
 + 카카오 로그인에서는 회원가입이 따로 없다. 카카오 로그인 된 사람만 사용가능!!
 + 카카오 로그인 할 경우에는 이메일 로그인을 안하고, 카카오에 있는 정보의 내용을 가지고 토큰기반으로 로그인한다 (SNS기반으로 한다)
@@ -738,6 +744,8 @@ module.exports = (passport) => {
 ```
 
 ## 카카오 앱 등록 & 실행 & 디버깅
+[위로 올라가기](#nodebird)
+
 <pre><code>설정 -> 일반 -> 플랫폼추가 -> 도메인에서 일단 localhost도에인으로 설정 -> 
 Redirect Path도 /auth/kakao/callback 설정해줘야한다. 
 (KakaoStrategy에서 callback이랑 똑같이 적어줘야한다.)</code></pre>
@@ -748,6 +756,7 @@ Redirect Path도 /auth/kakao/callback 설정해줘야한다.
 
 
 ## multer로 이미지 업로드하기
+[위로 올라가기](#nodebird)
 
 <pre><code>D:\_Node.js\_NodeStudy_inflearn\Node-Study\NodeSNS\nodebird>npm i multer
 + multer@1.4.2</code></pre>
@@ -849,6 +858,8 @@ module.exports = router;
 ```
 
 ## 게시글 업로드 구현하기
+[위로 올라가기](#nodebird)
+
 참고) multer로 이미지 업로드하기 내용이 연결되어 있음
 
 
@@ -973,6 +984,7 @@ main.pug 오류문제가 있어서 수정한다.
 
 
 ## 해시태그 검색 & 팔로잉 구현 & 마무리
+[위로 올라가기](#nodebird)
 
 ### 해시태그 검색
 #### routes/post.js
@@ -1064,6 +1076,7 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
 > 오류메세지인데, 여기서 'as' 쪽에서 철자나 내용물이 틀렸다는 것이다.
 
 ## 팔로잉 취소, 프로필 수정
+[위로 올라가기](#nodebird)
 
 ### 팔로잉 취소
 #### views/main.put
@@ -1131,3 +1144,142 @@ router.post('/profile', async ( req, res, next) => {
 });
 ```
 위와 같이 내용 추가
+
+## 좋아요, 좋아요 취소
+[위로 올라가기](#nodebird)
+
+사용자랑 게시글의 다대다관계 설정하기
+
+#### models/like.js
+
+```js
+// 좋아요 테이블
+module.exports = ( (sequelize, DataTypes) => (
+  sequelize.define ('like', {
+      userid: {
+        type: DataTypes.STRING(50),
+          allowNull : false,
+      },
+      postid : {
+        type : DataTypes.STRING(50),
+          allowNull: false,
+      }
+  }, {
+    timestamps: true,
+      paranoid: true,
+  })
+));
+```
+
+#### models/index.js
+
+> 다대다 관계에서는 새로운 테이블이 꼭 필요하다. 그래서 Like테이블을 추가해줬다. <br>위에 보면 models/like.js를 추가해줬다.
+
+```js
+...위 생략
+db.User.belongsToMany(db.Post, {through: 'Like' });
+db.Post.belongsToMany(db.User, {through: 'Like' ,as: 'Liker'});
+```
+
+#### views/main.pug
+```js
+ -const like = user && twit && twit.Liker && twit.Liker.map(f => f.id).includes(req.user.id);
+if user && !like
+  button.like 좋아요
+else if user && like
+  button.unlike 좋아요 취소
+
+...생략
+
+document.querySelectorAll('.like').forEach(function (tag) {
+  tag.addEventListener('click', function () {
+    var isLoggedIn = document.querySelector('#my-id');
+    var twitId = tag.parentNode.querySelector('.twit-id').value;
+    if (isLoggedIn) {
+      var xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          location.reload();
+        } else {
+          console.error(xhr.responseText);
+        }
+      };
+      xhr.open('POST', '/post/' + twitId + '/like');
+      xhr.send();
+      
+    }
+  });
+});
+document.querySelectorAll('.unlike').forEach(function (tag) {
+  tag.addEventListener('click', function () {
+    var isLoggedIn = document.querySelector('#my-id');
+    var twitId = tag.parentNode.querySelector('.twit-id').value;
+    if (isLoggedIn) {
+      var xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          location.reload();
+        } else {
+          console.error(xhr.responseText);
+        }
+      };
+      xhr.open('DELETE', '/post/' + twitId + '/like');
+      xhr.send();
+    }
+  });
+});
+```
+추가를 해준다. 
+
+#### routes/page.js
+
+```js
+...위 생략
+// 메인 페이지
+router.get('/', (req, res, next) => {
+// Post에서 모든 것을 찾으면서 게시글 작성자 모델과 include로 연결해주고  
+Post.findAll({
+    include: 
+    [{  // 구분 : 작성자
+        model : User,
+        attributes: ['id', 'nick'], // 아이디랑 닉네임의 값을 가져온다.
+    }, {
+        // 구분 : 좋아요 누른 사람
+        // include에서 같은 모델이 여러 개이면 as로 구분한다.
+        model: User,
+        attributes:['id', 'nick'],
+        as: 'Liker' // as로 구분하니까 models/index.js도 구분해준다.
+    }]
+})
+```
+> model랑 attributes가 같은 경우에는 <strong>as로 구분</strong>해준다. 그리고 models/index.js에도 <strong>"as:Liker"</strong>를 추가해주는 것을 뺴 먹지 않아야한다.
+
+#### routes/post.js
+
+게시물에 유저가 좋아요 할 수 있도록한다.    
+```js
+// 좋아요 버튼
+router.post('/:id/like', async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: {id: req.params.id}});
+    await post.addLiker(req.user.id);
+    res.send('OK');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+// 좋아요 취소 버튼
+router.delete('/:id/like', async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: {id: req.params.id}});
+    await post.addLiker(req.user.id);
+    res.send('OK');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+```
+
