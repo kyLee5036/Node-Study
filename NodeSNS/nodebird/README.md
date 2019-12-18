@@ -17,6 +17,7 @@
 + [해시태그 검색 & 팔로잉 구현 & 마무리](#해시태그-검색-&-팔로잉-구현-&-마무리)
 + [팔로잉 취소, 프로필 수정](#팔로잉-취소,-프로필-수정)
 + [좋아요, 좋아요 취소](#좋아요,-좋아요-취소)
++ 게시글 삭제
 
 
 
@@ -1283,3 +1284,52 @@ router.delete('/:id/like', async (req, res, next) => {
 });
 ```
 
+## 게시글 삭제
+
+프론트랑 서버단에서도 같이 삭제하는 소스를 작성해준다.
+
+#### views/main.pug
+```js
+document.querySelectorAll('.delete').forEach(function (tag) {
+  tag.addEventListener('click', function () {
+    var isLoggedIn = document.querySelector('#my-id');
+    var twitId = tag.parentNode.querySelector('.twit-id').value;
+    if (isLoggedIn) {
+      var userId = tag.parentNode.querySelector('.twit-user-id').value;
+      var myId = isLoggedIn.value;
+      if (userId !== myId) {
+        if (confirm('게시글 삭제하겠습니까?')) {
+          var xhr = new XMLHttpRequest();
+          xhr.onload = function () {
+            if (xhr.status === 200) {
+              location.reload();
+            } else {
+              console.error(xhr.responseText);
+            }
+          };
+          xhr.open('DELETE', '/post/' + twitId);
+          xhr.send();
+        }
+      }
+    }
+  });
+});
+```
+
+### routes/post.js
+```js
+// 게시글 삭제
+router.delete('/', async(req, res, next) => {
+  try {
+    await Post.destroy( {
+      where : {
+        id : req.params.id,
+        userId: req.user.id,
+      }
+    })
+  } catch ( error ) {
+    console.error(error);
+    next(error);
+  }
+})
+```

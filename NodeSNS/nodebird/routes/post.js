@@ -55,6 +55,21 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
   }
 });
 
+// 게시글 삭제
+router.delete('/', async(req, res, next) => {
+  try {
+    await Post.destroy( {
+      where : {
+        id : req.params.id,
+        userId: req.user.id,
+      }
+    })
+  } catch ( error ) {
+    console.error(error);
+    next(error);
+  }
+})
+
 // 해시태그 검색
 router.get('/hashtag', async(req, res, next) => {
   const query = req.query.hashtag;
