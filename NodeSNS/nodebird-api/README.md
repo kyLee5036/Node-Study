@@ -1,8 +1,11 @@
-# nodebird-API
+# Nodebird API
 
 + [API 서버의 개념과 필요성](#API-서버의-개념과-필요성)
++ [NodeBird-API 프로젝트 세팅하기](#NodeBird-API-프로젝트-세팅하기)
+
 
 ## API 서버의 개념과 필요성
+[위로가기](#Nodebird-API)
 
 Application (어플리케이션) <br>
 Programming (프로그래밍) <br>
@@ -25,3 +28,105 @@ localhost:8002(NodeBird-API) : API 서버 <br>
 localhost:8003(NodeBird-Call) : 클라이언트 <br>
 
 이 세개의 서버를 동시에 소통할 수도 있다. DB는 MySQL을 사용할 것이다.
+
+## NodeBird-API 프로젝트 세팅하기
+
+<pre><code>npm init
+
+npm i bcrypt connect-flash cookie-parser dotenv express express-session morgan mysql2 passport passport-kakao passport-local pug sequelize uuid
+
++ bcrypt@3.0.7
++ express-session@1.17.0
++ dotenv@8.2.0
++ mysql2@2.0.2
++ morgan@1.9.1
++ connect-flash@0.1.1
++ cookie-parser@1.4.4
++ express@4.17.1
++ passport@0.4.1
++ passport-kakao@1.0.0
++ passport-local@1.0.0
++ pug@2.0.4
++ uuid@3.3.3
++ sequelize@5.21.3 (버전중요!!!!)
+
+npm i -D nodemon
++ nodemon@2.0.2
+</code></pre>
+
+이번에는 개발자가 되어서 키 발급할 것을 만들어주고, 플랫폼들도 만들것이다!<br><br>
+
+사용자에게 발급할 시크릿키와 도메인주소를 저장할 Domain모델을 만들어준다.
+#### models/domain.js
+```js
+// 도메인 테이블
+// 카카오 개발자 같은 것을 만들거라서 도메인 테이블을 만든다.
+module.exports = (sequelize, DataTypes) => (
+  sequelize.define('domain', {
+    // API를 쓸수 있는 것
+    host: {
+      type: DataTypes.STRING(80),
+      allowNull: false,
+    },
+    // 유료 사용자, 무료 사용자 구분
+    type: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+    },
+    // 카카오에서 발급받은 비밀 키
+    clientSecret: {
+      type: DataTypes.STRING(40),
+      allowNull: false,
+    }
+  }, {
+    timestamps: true, // 생성일, 수정일
+    paranoid: true, // 삭제일
+    validate: { // 더 엄격하게 검증하는 거, 
+      unknowType() { // 마음대로 이름정해도 상관없다.
+        // free나 premium 중에 아니면 디비에 저장이 안된다!
+        if ( this.type === 'free' && this.type !== 'premium') {
+          throw new Error('type 컬럼은 free거나 premium이어야 한다.');
+        }
+      }
+    },
+  })
+);
+```
+
+#### models/index.js
+```js
+.. 생략
+db.Domain = require('./domain')(sequelize, Sequelize);
+...생략
+db.User.hasMany(db.Domain);
+db.Domain.belongsTo(db.User);
+```
+
+#### routes/index.js
+
+```js
+const express = require('express');
+
+const { User, Domain } = require('../models');
+const router = express.Router();
+
+router.get('/', (req, res, next) => {
+  User.findOne({
+    where: { id: req.user && req.user.id || null },
+    include: { model: Domain },
+  })
+    .then((user) => {
+      res.render('login', {
+        user,
+        loginError: req.flash('loginError'),
+        domains: user && user.domains,
+      });
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+module.exports = router;
+```
+
+그 이외에는 자기가 알아서 추가할 것!!
