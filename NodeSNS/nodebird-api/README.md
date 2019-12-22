@@ -2,6 +2,7 @@
 
 + [API 서버의 개념과 필요성](#API-서버의-개념과-필요성)
 + [NodeBird-API 프로젝트 세팅하기](#NodeBird-API-프로젝트-세팅하기)
++ clientSecreet과 UUID
 
 
 ## API 서버의 개념과 필요성
@@ -30,6 +31,7 @@ localhost:8003(NodeBird-Call) : 클라이언트 <br>
 이 세개의 서버를 동시에 소통할 수도 있다. DB는 MySQL을 사용할 것이다.
 
 ## NodeBird-API 프로젝트 세팅하기
+[위로가기](#Nodebird-API)
 
 <pre><code>npm init
 
@@ -94,6 +96,8 @@ module.exports = (sequelize, DataTypes) => (
 ```
 
 #### models/index.js
+
+DB 관계설정 및 연결
 ```js
 .. 생략
 db.Domain = require('./domain')(sequelize, Sequelize);
@@ -130,3 +134,38 @@ module.exports = router;
 ```
 
 그 이외에는 자기가 알아서 추가할 것!!
+
+## clientSecreet과 UUID
+
+[위로가기](#Nodebird-API)
+
+여기서 로그인은 노드버드로 가입했던 걸로 하면된다.<br><br>
+
+clientSecreet라는 것을 만들어 그 값을 UUID에 넣어 줄 것이다.<br>
+UUID : 고유한 값을 만들어주는 패키지이다<br>
+```js 
+const uuidv4 = require('uuid/v4'); // 4버전
+...생략
+
+// 도메인 만드는 것
+router.post('/domain', (req, res, next) => {
+  Domain.create({
+    userId: req.user.id,
+    host: req.body.host,
+    type: req.body.type,
+    clientSecret: uuidv4(), // 비밀키를 발급해주는 것
+    // 여기서 비밀키는 안 겹치게 해야한다. 
+  })
+    .then(() => {
+      res.redirect('/');
+    })
+    .catch((error) => {
+      next(error);
+    });
+});
+```
+도메인 주소에 입력 값은 : http://localhost:8003으로 한다.<br>
+http://localhost:8003을 접속해서 클라이언트 비밀 키를 사용해서 서버로 요청 보내면 그 서버가 API 요청을 해준다. 만약에 도메인 주소나 클라이언트 비밀 키가 틀리면 접속을 금지한다.<br>
+여기 API서버에는 게시글이나, 해시태글등의 데이터를 가져올 수 있도록할 것이다.
+
+
