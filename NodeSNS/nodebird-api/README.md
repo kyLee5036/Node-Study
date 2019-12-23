@@ -2,7 +2,7 @@
 
 + [API 서버의 개념과 필요성](#API-서버의-개념과-필요성)
 + [NodeBird-API 프로젝트 세팅하기](#NodeBird-API-프로젝트-세팅하기)
-+ clientSecreet과 UUID
++ [clientSecreet과 UUID](#clientSecreet과-UUID)
 
 
 ## API 서버의 개념과 필요성
