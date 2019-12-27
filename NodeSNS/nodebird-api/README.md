@@ -3,6 +3,7 @@
 + [API 서버의 개념과 필요성](#API-서버의-개념과-필요성)
 + [NodeBird-API 프로젝트 세팅하기](#NodeBird-API-프로젝트-세팅하기)
 + [clientSecreet과 UUID](#clientSecreet과-UUID)
++ [JWT와 jsonwebtoken 패키지](#JWT와-jsonwebtoken-패키지)
 
 
 ## API 서버의 개념과 필요성
@@ -167,5 +168,222 @@ router.post('/domain', (req, res, next) => {
 도메인 주소에 입력 값은 : http://localhost:8003으로 한다.<br>
 http://localhost:8003을 접속해서 클라이언트 비밀 키를 사용해서 서버로 요청 보내면 그 서버가 API 요청을 해준다. 만약에 도메인 주소나 클라이언트 비밀 키가 틀리면 접속을 금지한다.<br>
 여기 API서버에는 게시글이나, 해시태글등의 데이터를 가져올 수 있도록할 것이다.
+
+## JWT와 jsonwebtoken 패키지
+
+토큰을 만들어주는 패키지를 먼저 설치를 한다.<br>
+토큰은 서버인증할 때 필요하다.<br>
+<pre><code>npm i jsonwebtoken</code></pre>
+
+#### .env 파일
+<pre><code>JWT_SECRET=토큰비밀번호</code></pre>
+
+.env에다가 JWT_SECRET하는 이유는 토큰 비밀번호가 노출되면 내 토큰인척해서 내 서버를 다른 사람이 사용해서 내 서버를 멋대로 인증하거나 사용하기 떄문이다.<br>
+JWT는 프론트나 서버 둘 다에서 인증 용도로 사용가능하다.<br>
+clientSecreet은 프론트 불가<br>
+JWT는 해커에게 털려도 해커가 맘대로 이용할 수 없다.<br>
+
+사용방법(코드설명에 있음)
+#### routes/middlewares.js
+```js
+// 토큰을 연결해줘야 한다
+const jwt = require('jsonwebtoken');
+
+// 로그인 성공여부
+exports.isLoggedIn = (req, res, next) => {
+  if ( req.isAuthenticated()) { // isAuthenticated() 로그인 여부를 알려준다.
+      next();
+  } else {
+      res.status(403).send('로그인 필요')
+  }
+}
+
+// 로그인을 안 했을경우
+exports.isNotLoggedIn = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+      next();
+  } else {
+      res.redirect('/');
+  }
+}
+
+// 인증을 해준다.
+exports.verify = (req, res, next) => {
+  
+  try { // try에서 검증시도
+    // 여기에서 토큰 인증시도한다. 
+    req.decoded = jwt.verify(req.headers.authorization, process.env.JWT_SECREET);
+    // 검증할 때 JWT_SECREET이 필요하다. JWT_SECREET은 절대로 노출되어서 안된다.
+    // 토큰요청은 http헤더의 authorization에 토큰을 넣어서 서버에 보낸다. 
+    return next();
+  } catch (error) {
+    // 유효하지 않을 때나 (내가 만든 토큰이 아닐 때), 토큰 유효 기간이 만료되었을 때 에러가 발생한다.
+    if (error.name == 'TokenExpiredError') {
+      // 토큰은 기간은 짧게주고 재 발급많이하는 방법도 좋다.
+      // v1.js에 보면 [expiresIn: '1m'] 라는 것이 발급시간을 가리킨다.
+      return res.status(419).json({
+          code: 419,
+          message: '토큰이 만료되었습니다.'
+      });
+    }
+    return res.status(401).json({
+        code: 401,
+        message: '유효하지 않은 토큰입니다.'
+    });
+  }
+}
+```
+isAuthenticated() : isAuthenticated()라는 메서드가 로그인 여부를 알려준다.
+
+```js
+req.decoded = jwt.verify(req.headers.authorization, process.env.JWT_SECREET);
+```
+여기에서 토큰 인증시도한다.<br>
+검증할 때 JWT_SECREET이 필요하다. JWT_SECREET은 절대로 노출되어서 안된다.<br>
+토큰요청은 http헤더의 authorization에 토큰을 넣어서 서버에 보낸다. <br>
+(개발자 도구에 열고 network -> header쪽을 보면 authorization라는 것이 있다)<br>
+
+```js
+// 유효하지 않을 때나 (내가 만든 토큰이 아닐 때), 토큰 유효 기간이 만료되었을 때 에러가 발생한다.
+if (error.name == 'TokenExpiredError') {
+  // 토큰은 기간은 짧게주고 재 발급많이하는 방법도 좋다.
+  // v1.js에 보면 [expiresIn: '1m'] 라는 것이 발급시간을 가리킨다.
+  return res.status(419).json({
+      code: 419,
+      message: '토큰이 만료되었습니다.'
+  });
+}
+return res.status(401).json({
+    code: 401,
+    message: '유효하지 않은 토큰입니다.'
+});
+}
+```
+error.name == 'TokenExpiredError' : 토큰 에러나 유료기간이 만료되었을 떄 해주는 것이다.<br>
+v1.js에 보면 발급시간이 있는데 발급시간이 지나가버리면 메세지에 '토큰이 만료되었습니다.'라고 메세지 출력한다.<br>
+만료되지 않고 유효하지 않은 토큰이라면 '유효하지 않은 토큰입니다'라는 메세지 출력한다.<br>
+
+#### routes/v1.js (여기서 v1은 버전 1의 의미이다.)
+
+나중에 버전 적용하기 위해서 v2라는 버전2라는 것도 만들것이다. 
+
+```js
+// 1버전의 의미
+
+const express = require('express');
+const jwt = require('jsonwebtoken');
+
+const { verifyToken } = require('./middlewares');
+// 만들었던 DB
+const { Domain, User, Post, Hashtag} = require('../models');
+
+const router = express.Router();
+
+//토큰을 발급할 것들
+router.post('/token', async(req, res) => {
+  const { clientSecreet } = req.body;
+  try {
+    // 도메인에서 clientSecreet가 맞는지 확인한다.
+    const domain = await Domain.findOne({ 
+      where: { clientSecreet },
+      include: {
+        model: User,
+        attribute: ['nick', 'id'],
+      },
+    });
+    // 도메인이 틀린경우에는 에러 메세지
+    if ( !domain ) {
+      return res.status(401).json({
+        code: 401,
+        message: '등록되지 않은 도메인입니다. 먼저 도메인을 등록하세요.',
+      });
+    }
+    // 발급한 토큰
+    // jwt.sign 메서드 안에서 jwt토큰을 발급할 수 있다.
+    // sing안에는 클라이언트 발급한 아이디, 닉네임이 받아온다
+    // 그리고 JWT_SECRET이 필요하다, 하지만 절대로 유출해서는 안된다
+    const token = jwt.sign({
+      id: domain.user.ud,
+      nick: domain.user.nick,
+    }, process.env.JWT_SECRET, {
+      expiresIn: '1m', // 1분, 1s : 1시간
+      issuer: 'nodebird', // 발급자
+    });
+    return res.json({
+      code: 200,
+      message: '토큰이 발급되었습니다',
+      token,
+    });
+    // 여기 catch 경우에서 next(error) 해주는데 뭔가 이상하다 !!
+    // 왜? 응답을 JSON으로 통일하기 위해서이다!! next(error)하면 HTML을 렌더링해주기 때문에
+    // JSON통일하기위해서 next(error)를 사용하지 않았다.
+  } catch ( error ) {
+    return res.status(500).json({
+      code: 500,
+      message: '서버 에러'
+    })
+  }
+});
+
+module.exports = router
+```
+
+> 팁!!!<br>
+> API 서버의 응답 형식은 하나로 통일해주는게 좋다 (JSON 등)<br>
+> 또한, 에러 코드를 고유하게 지정해 에러가 뭔지 쉽게 알 수 있게 새주는 것이 좋다
+
+```JS
+...위 생략
+// 발급한 토큰
+const token = jwt.sign({ // jwt.sign 메서드 안에서 jwt토큰을 발급할 수 있다.
+  id: domain.user.ud, // sing안에는 내가 지정한 클라이언트 발급한 아이디, 닉네임이 받아온다
+  nick: domain.user.nick,
+}, process.env.JWT_SECRET, { // JWT_SECRET는 필요하다, 절대로 유출해서는 안된다
+  expiresIn: '1m', // 1분, 1s : 1시간
+  issuer: 'nodebird', // 발급자
+});
+return res.json({
+  code: 200,
+  message: '토큰이 발급되었습니다',
+  token,
+});
+// 여기 catch 경우에서 next(error) 해주는데 뭔가 이상하다 !!
+// 왜? 응답을 JSON으로 통일하기 위해서이다!! next(error)하면 HTML을 렌더링해주기 때문에
+// JSON통일하기위해서 next(error)를 사용하지 않았다.
+} catch ( error ) {
+  return res.status(500).json({
+    code: 500,
+    message: '서버 에러'
+  })
+}
+```
+<br>
+
+```js
+catch ( error ) {
+  return res.status(500).json({
+    code: 500,
+    message: '서버 에러'
+  })
+}
+```
+catch부문에서 next(error)를 하지않는 이유는 : JSON형식으로 통일해주기 위해서 안해주었다.<br>
+next(error)를 한다면, HTML을 렌더링해주기 떄문이다.<br>
+
+JWT 토큰 내용은 다 보이므로 민감한 내용은 저장하지 않는다.<br>
+대신 변조할 수 없으므로 믿고 사용해도 된다.<br>
+https://jwt.io<br>
+위 사이트에 들어가서 볼 수가 있다.<br>
+
+#### app.js
+```js
+const v1 = require('./routes/v1');
+
+...아래 생략
+
+app.use('/v1', v1);
+```
+추가를 해준다.
+
 
 
