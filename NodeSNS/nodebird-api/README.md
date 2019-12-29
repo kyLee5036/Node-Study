@@ -488,7 +488,8 @@ router.get('/test', verifyToken, (req, res) => {
   res.json(req.decoded);
 });
 ```
-nodebird-call이랑 연결할 수 있도록 라우터를 만든다.
+nodebird-call이랑 연결할 수 있도록 라우터를 만든다.<br>
 
-middlewares.js의 데이터가 v1.js에 전달한다. 
+middlewares.js의 데이터가 v1.js에 전달한다. v1는 nodebird-call에 있는 routes의 test에 데이터들을 전달한다.
 
+nodebird-api/routes/middlewares.js -> nodebird-api/routes/v1.js -> nodebird-call/routes/index.js의 "router.get('/test', "에 전달한다.
