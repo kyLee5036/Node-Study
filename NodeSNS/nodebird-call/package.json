@@ -1,0 +1,24 @@
+{
+  "name": "nodebird-call",
+  "version": "1.0.0",
+  "description": "+ [API 서버의 개념과 필요성](#API-서버의-개념과-필요성)\r + [NodeBird-API 프로젝트 세팅하기](#NodeBird-API-프로젝트-세팅하기)\r + [clientSecreet과 UUID](#clientSecreet과-UUID)\r + [JWT와 jsonwebtoken 패키지](#JWT와-jsonwebtoken-패키지)\r + [API 호출 서버 만들기](#API-호출-서버-만들기)",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon app",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "LEEKY",
+  "license": "MIT",
+  "dependencies": {
+    "D": "^1.0.0",
+    "axios": "^0.19.0",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.4",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
+    "morgan": "^1.9.1",
+    "passport": "^0.4.1",
+    "pug": "^2.0.4"
+  }
+}

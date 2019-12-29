@@ -55,6 +55,11 @@ router.post('/token', async(req, res) => {
   }
 });
 
+// verifyToken의 검정은 routes/middlewares.js에 있다
+router.get('/test', verifyToken, (req, res) => {
+  res.json(req.decoded);
+});
+
 module.exports = router
 
 // 팁!!!
