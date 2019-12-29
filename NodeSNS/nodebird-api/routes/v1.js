@@ -11,11 +11,11 @@ const router = express.Router();
 
 //토큰을 발급할 것들
 router.post('/token', async(req, res) => {
-  const { clientSecreet } = req.body;
+  const { clientSecret } = req.body;
   try {
-    // 도메인에서 clientSecreet가 맞는지 확인한다.
+    // 도메인에서 clientSecret가 맞는지 확인한다.
     const domain = await Domain.findOne({
-      where: { clientSecreet },
+      where: { clientSecret },
       include: {
         model: User,
         attribute: ['nick', 'id'],
@@ -36,7 +36,7 @@ router.post('/token', async(req, res) => {
       id: domain.user.ud,
       nick: domain.user.nick,
     }, process.env.JWT_SECRET, {
-      expiresIn: '1m', // 1분, 1s : 1시간
+      expiresIn: '1s', // 1m : 1분 , 1s : 1시간
       issuer: 'nodebird', // 발급자
     });
     return res.json({
