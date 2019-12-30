@@ -29,7 +29,7 @@ router.post('/token', async(req, res) => {
       });
     }
     const token = jwt.sign({
-      id: domain.user.ud,
+      id: domain.user.id,
       nick: domain.user.nick,
     }, process.env.JWT_SECRET, {
       expiresIn: '1s', // 1m : 1분 , 1s : 1시간
