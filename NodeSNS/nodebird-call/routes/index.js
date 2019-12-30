@@ -35,13 +35,62 @@ router.get('/test', async (req, res, next) => {
   }
 });
 
+// request함수는 세션발급받고, 이런 것들을 다 하는 것들이다.
+const request = async (req, api) => {
+  try {
+    if ( !req.session.jwt) { // 세션에 토큰이 없으면
+      const tokenResult = await axios.post('http://localhost:8002/token', {
+        clientSecret: process.env.CLIENT_SECRET, //clientSecret을 넣어야 JWT토큰을 받을 수 있다.
+      });
+      req.session.jwt = tokenResult.data.token; // 토큰 저장
+    }
+    return await axios.get(`http://localhost:8002/v1${api}`, {
+      headers: {authorization: req.session.jwt}, 
+    }); 
+  } catch ( error ) {
+    console.error(error);
+    if (error.response.status < 500) {
+      return error.response;
+    }
+    throw error;
+  }
+}
+
+// Call 서버 -> API 서버
+// 여기서 request함수는 만들어줘야한다. 나중에 리펙토링하면서 만들어 줄거임!
+
+// nodebird-api의 요청을 보낸다.
+// /mypost -> /posts/my
+// /mypost ----> nodebird-api의 /posts/my 요청(토큰)
+router.get('/mypost', async(req, res, next) => {
+  try {
+    const result = await request(req, '/posts/my'); // posts/my 앞에 request가 있다. 
+    // request의 메서드를 받아와서 `http://localhost:8002/v1${api}` // api가 post/my이 된다
+    res.json(result.data);
+  } catch ( error ) {
+    console.error(error);
+    next(error);
+  }
+});
+
+// nodebird-api의 요청을 보낸다.
+// /search -> /posts/hashtag
+// /search/노드 ----> nodebird-api의 /posts/hashta/노드 요청(토큰)
+router.get('/search/:hashtag', async(req, res, next) => {
+  try {
+    const result = await request(
+      // encodeURIComponent는 주소에 한글사용하면 에러나오니까 막아주기 위해서 사용하였다. 
+      req, `/posts/hashtag/${encodeURIComponent(req.params.hashtag)}`, 
+    );
+    res.json(result.data);
+  } catch ( error ) {
+    console.error(error);
+    next(error);
+  } 
+});
+
+// request 토큰 발급받는곳
+// posts 게시물 가져오는 거
+// hashtag 검색태그 가져오는 거
+
 module.exports = router;
-
-// axios는 다른 서버에 요청을 보내는 간단하고 유용한 라이브러리이다
-// axios.메서드 (주소, 옵션)
-
-// 순서가
-// 세션에 토큰이 없으면 발급을 받고, 그 다음 세션에 토큰을 저장하고, 토큰 요청을 보낸다
-// 하지만, 테스트할 떄 에러가 나올경우가 있다.
-// 에러나올 경우에는 토큰이 만료가 되거나, 유효할 경우
-// 

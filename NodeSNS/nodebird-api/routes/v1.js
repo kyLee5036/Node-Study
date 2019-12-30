@@ -28,10 +28,6 @@ router.post('/token', async(req, res) => {
         message: '등록되지 않은 도메인입니다. 먼저 도메인을 등록하세요.',
       });
     }
-    // 발급한 토큰
-    // jwt.sign 메서드 안에서 jwt토큰을 발급할 수 있다.
-    // sing안에는 클라이언트 발급한 아이디, 닉네임이 받아온다
-    // 그리고 JWT_SECRET이 필요하다, 하지만 절대로 유출해서는 안된다
     const token = jwt.sign({
       id: domain.user.ud,
       nick: domain.user.nick,
@@ -44,9 +40,6 @@ router.post('/token', async(req, res) => {
       message: '토큰이 발급되었습니다',
       token,
     });
-    // 여기 catch 경우에서 next(error) 해주는데 뭔가 이상하다 !!
-    // 왜? 응답을 JSON으로 통일하기 위해서이다!! next(error)하면 HTML을 렌더링해주기 때문에
-    // JSON통일하기위해서 next(error)를 사용하지 않았다.
   } catch ( error ) {
     return res.status(500).json({
       code: 500,
@@ -60,8 +53,50 @@ router.get('/test', verifyToken, (req, res) => {
   res.json(req.decoded);
 });
 
-module.exports = router
 
-// 팁!!!
-// API 서버의 응답 형식은 하나로 통일해주는게 좋다 (JSON 등)
-// 또한, 에러 코드를 고유하게 지정해 에러가 뭔지 쉽게 알 수 있게 새주는 것이 좋다
+// 무조건 토큰부터 검사를 해야한다.
+
+// 내가 작성한 게시글들을 불러온다.
+router.get('/posts/my', verifyToken, (req, res) => {
+  Post.findAll({ where: { userId: req.decoded.id } }) // 게시글을 다 겨온다.
+    .then((posts) => { // 성공할 경우
+      console.log(posts);
+      res.json({ 
+        code: 200,
+        payload: posts,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      return res.status(500).json({
+        code: 500,
+        message: `서버 에러`,
+      })
+    })
+});
+
+// 해시태그를 검색하는 기능
+router.get('/posts/hashtag/:title', verifyToken, async(req, res) => {
+  try {
+    const hashtag = await Hashtag.findOne({ where: { title: req.params.title }});
+    if (!hashtag) {
+      return res.status(404).json({
+        code: 401,
+        message: '검색 결과가 없습니다.'
+      });
+    }
+    const posts = await hashtag.getPosts();// 해시태그와 연관된 거 가져오기
+    return res.json({
+      code: 200,
+      payload: posts,
+    })
+  } catch(error) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: `서버 에러`,
+    })
+  }
+});
+
+module.exports = router

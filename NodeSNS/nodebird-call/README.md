@@ -5,6 +5,7 @@
 + [clientSecreet과 UUID](#clientSecreet과-UUID) - 생략
 + [JWT와 jsonwebtoken 패키지](#JWT와-jsonwebtoken-패키지) - 생략
 + [API 호출 서버 만들기](#API-호출-서버-만들기)
++ [API 작성 및 호출하기](#API-작성-및-호출하기)
 
 
 ## API 호출 서버 만들기
@@ -115,3 +116,122 @@ middlewares.js의 데이터가 v1.js에 전달한다. v1는 nodebird-call에 있
 
 nodebird-api/routes/middlewares.js -> nodebird-api/routes/v1.js -> nodebird-call/routes/index.js의 "router.get('/test', "에 전달한다.
 
+## API 작성 및 호출하기
+
+코드를 보면 next(error)와 같은게 없을 것이다. 왜냐하면, json형태로 다 통일해줬기 때문이다. 그래야 나중에 유지보수할 때 어렵지가 않다.
+
+#### nodebird-api/routes/v1.js
+```js
+... 내용생략
+
+// 무조건 토큰부터 검사를 해야한다.
+
+// 내가 작성한 게시글들을 불러온다.
+router.get('/posts/my', verifyToken, (req, res) => {
+  Post.findAll({ where: { userId: req.decoded.id } }) // 게시글을 다 겨온다.
+    .then((posts) => { // 성공할 경우
+      console.log(posts);
+      res.json({ 
+        code: 200,
+        payload: posts,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      return res.status(500).json({
+        code: 500,
+        message: `서버 에러`,
+      })
+    })
+});
+
+// 해시태그를 검색하는 기능
+router.get('/posts/hashtag/:title', verifyToken, async(req, res) => {
+  try {
+    const hashtag = await Hashtag.findOne({ where: { title: req.params.title }});
+    if (!hashtag) {
+      return res.status(404).json({
+        code: 401,
+        message: '검색 결과가 없습니다.'
+      });
+    }
+    const posts = await hashtag.getPosts();// 해시태그와 연관된 거 가져오기
+    return res.json({
+      code: 200,
+      payload: posts,
+    })
+  } catch(error) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: `서버 에러`,
+    })
+  }
+});
+```
+
+nodebird-api에 추가를 해주었다. 그 다음에 nodebird-call에 네용들을 추가 해준다.
+
+#### nodebird-call/routes/index.js
+```js
+...위 생략
+
+// request함수는 세션발급받고, 이런 것들을 다 하는 것들이다.
+const request = async (req, api) => {
+  try {
+    if ( !req.session.jwt) { // 세션에 토큰이 없으면
+      const tokenResult = await axios.post('http://localhost:8002/token', {
+        clientSecret: process.env.CLIENT_SECRET, //clientSecret을 넣어야 JWT토큰을 받을 수 있다.
+      });
+      req.session.jwt = tokenResult.data.token; // 토큰 저장
+    }
+    return await axios.get(`http://localhost:8002/v1${api}`, {
+      headers: {authorization: req.session.jwt}, 
+    }); 
+  } catch ( error ) {
+    console.error(error);
+    if (error.response.status < 500) {
+      return error.response;
+    }
+    throw error;
+  }
+}
+
+// Call 서버 -> API 서버
+// 여기서 request함수는 만들어줘야한다. 나중에 리펙토링하면서 만들어 줄거임!! -> 위에 추가했음
+
+// nodebird-api의 요청을 보낸다.
+// /mypost -> /posts/my
+// /mypost ----> nodebird-api의 /posts/my 요청(토큰)
+router.get('/mypost', async(req, res, next) => {
+  try {
+    const result = await request(req, '/posts/my'); // posts/my 앞에 request가 있다. 
+    // request의 메서드를 받아와서 `http://localhost:8002/v1${api}` // api가 post/my이 된다
+    res.json(result.data);
+  } catch ( error ) {
+    console.error(error);
+    next(error);
+  }
+});
+
+// nodebird-api의 요청을 보낸다.
+// /search -> /posts/hashtag
+// /search/노드 ----> nodebird-api의 /posts/hashta/노드 요청(토큰)
+router.get('/search/:hashtag', async(req, res, next) => {
+  try {
+    const result = await request(
+      // encodeURIComponent는 주소에 한글사용하면 에러나오니까 막아주기 위해서 사용하였다. 
+      req, `/posts/hashtag/${encodeURIComponent(req.params.hashtag)}`, 
+    );
+    res.json(result.data);
+  } catch ( error ) {
+    console.error(error);
+    next(error);
+  } 
+});
+
+... 이하 생략
+```
+request : 토큰 발급받는곳<br>
+posts : 게시물 가져오는 거<br>
+hashtag : 검색태그 가져오는 거<br>
