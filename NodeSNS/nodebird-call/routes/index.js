@@ -91,8 +91,4 @@ router.get('/search/:hashtag', async(req, res, next) => {
   } 
 });
 
-// request 토큰 발급받는곳
-// posts 게시물 가져오는 거
-// hashtag 검색태그 가져오는 거
-
 module.exports = router;

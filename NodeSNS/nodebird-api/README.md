@@ -499,7 +499,6 @@ nodebird-api/routes/middlewares.js -> nodebird-api/routes/v1.js -> nodebird-call
 
 
 ## API 작성 및 호출하기
-[위로가기](#Nodebird-API)
 
 코드를 보면 next(error)와 같은게 없을 것이다. 왜냐하면, json형태로 다 통일해줬기 때문이다. 그래야 나중에 유지보수할 때 어렵지가 않다.
 
@@ -562,26 +561,26 @@ nodebird-api에 추가를 해주었다. 그 다음에 nodebird-call에 네용들
 // request함수는 세션발급받고, 이런 것들을 다 하는 것들이다.
 const request = async (req, api) => {
   try {
-    if ( !req.session.jwt) { // 세션에 토큰이 없으면
-      const tokenResult = await axios.post('http://localhost:8002/token', {
+    if (!req.session.jwt) { // 세션에 토큰이 없으면
+      const tokenResult = await axios.post(`${URL}/token`, {
         clientSecret: process.env.CLIENT_SECRET, //clientSecret을 넣어야 JWT토큰을 받을 수 있다.
       });
-      req.session.jwt = tokenResult.data.token; // 토큰 저장
+      req.session.jwt = tokenResult.data.token; // 세션에 토큰 저장
     }
-    return await axios.get(`http://localhost:8002/v1${api}`, {
-      headers: {authorization: req.session.jwt}, 
-    }); 
-  } catch ( error ) {
-    console.error(error);
-    if (error.response.status < 500) {
-      return error.response;
-    }
-    throw error;
+    return await axios.get(`${URL}${api}`, {
+      headers: { authorization: req.session.jwt },
+    }); // API 요청
+  } catch (error) {
+    if (error.response.status === 419) { // 토큰 만료시 토큰 재발급 받기
+      delete req.session.jwt;
+      return request(req, api);
+    } // 419 외의 다른 에러면
+    return error.response;
   }
 }
 
 // Call 서버 -> API 서버
-// 여기서 request함수는 만들어줘야한다. 나중에 리펙토링하면서 만들어 줄거임!! -> 위에 추가했음
+// 여기서 request함수는 만들어줘야한다. 나중에 리펙토링하면서 만들어 줄거임!
 
 // nodebird-api의 요청을 보낸다.
 // /mypost -> /posts/my
