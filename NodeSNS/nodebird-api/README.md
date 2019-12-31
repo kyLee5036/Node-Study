@@ -6,6 +6,7 @@
 + [JWT와 jsonwebtoken 패키지](#JWT와-jsonwebtoken-패키지)
 + [API 호출 서버 만들기](#API-호출-서버-만들기)
 + [API 작성 및 호출하기](#API-작성-및-호출하기)
++ [스스로 해보기1(팔로잉, 팔로워 API)](#스스로-해보기1(팔로잉,-팔로워-API))
 
 
 
@@ -617,3 +618,73 @@ router.get('/search/:hashtag', async(req, res, next) => {
 request : 토큰 발급받는곳<br>
 posts : 게시물 가져오는 거<br>
 hashtag : 검색태그 가져오는 거<br>
+
+
+## 스스로 해보기1(팔로잉, 팔로워 API)
+[위로가기](#Nodebird-API)
+
+#### nodebird-api/routes/v1.js
+
+```js
+... 위 생략
+
+//팔로워 팔로잉 목록 API 만들기
+router.get('/follow', verifyToken, async(req, res) => {
+  try {
+    const user = await User.findOne({ 
+      where: {
+        id: req.decoded.id
+      }
+    });
+    const follower = await user.getFollowers({
+      attributes: ['id', 'nick']
+    });
+    const following = await user.getFollowings({
+      attributes: ['id', 'nick']
+    });
+    return res.json ({
+      code: 200,
+      follower,
+      following,
+    })
+  } catch ( error ) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: `서버 에러`,
+    });
+  }
+});
+... 이하 생략
+```
+
+#### nodebird-cal/routes/index.js
+
+```js
+... 위 생략
+
+router.get('/follow', async (req, res, next) => {
+  try {
+    const result = await request(
+      req, `/follow`
+    );
+    res.json(result.data);
+  } catch ( error ) {
+    console.error(error);
+    next(error);
+  }
+});
+```
+
+여기서 목록을 불러왔는데 비밀번호가 가져오게 된다.<br> 그래서 옵션으로 지정해야한다. <br>
+시퀄라이즈 attributes 속성으로 원하는 컬럼만 가져올 수 있다.<br>
+
+```js
+const follower = await user.getFollowers({
+  attributes: ['id', 'nick']
+});
+const following = await user.getFollowings({
+  attributes: ['id', 'nick']
+});
+```
+여기서 attributes를 보면 아이디랑, 닉네임만 가져오게 된다.

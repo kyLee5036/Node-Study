@@ -18,7 +18,7 @@ router.post('/token', async(req, res) => {
       where: { clientSecret },
       include: {
         model: User,
-        attribute: ['nick', 'id'],
+        attributes: ['nick', 'id'],
       },
     });
     // 도메인이 틀린경우에는 에러 메세지
@@ -96,6 +96,34 @@ router.get('/posts/hashtag/:title', verifyToken, async(req, res) => {
       code: 500,
       message: `서버 에러`,
     })
+  }
+});
+
+//팔로워 팔로잉 목록 API 만들기
+router.get('/follow', verifyToken, async(req, res) => {
+  try {
+    const user = await User.findOne({ 
+      where: {
+        id: req.decoded.id
+      }
+    });
+    const follower = await user.getFollowers({
+      attributes: ['id', 'nick']
+    });
+    const following = await user.getFollowings({
+      attributes: ['id', 'nick']
+    });
+    return res.json ({
+      code: 200,
+      follower,
+      following,
+    })
+  } catch ( error ) {
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      message: `서버 에러`,
+    });
   }
 });
 
