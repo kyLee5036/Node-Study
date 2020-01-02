@@ -12,7 +12,7 @@ router.get('/test', async (req, res, next) => {
   try {
     // 일단 세션에 토큰에 저장할 것이다.
     if (!req.session.jwt) { // 세션에 토큰이 없으면
-      const tokenResult = await axios.post('http://localhost:8002/v2/token', {
+      const tokenResult = await axios.post(`${URL}/token`, {
         clientSecret: process.env.CLIENT_SECRET,
       });
       // 토큰을 가져와서 성공을 하는 경우
@@ -23,7 +23,7 @@ router.get('/test', async (req, res, next) => {
         // 실패했을 떄 데이터에 메러메세지가 들어있을 것이다. nodebird-api의 에러 메세지에 있다.
         return res.json(tokenResult.data); // 발급 실패 사유 응답
       }
-      const result = await axios.get('http://localhost:8002/v2/test', {
+      const result = await axios.get(`${URL}/test`, {
         headers: { authorization: req.session.jwt },
       });
       return res.json(result.data);
