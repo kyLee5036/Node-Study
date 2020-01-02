@@ -7,6 +7,7 @@
 + [API 호출 서버 만들기](#API-호출-서버-만들기)
 + [API 작성 및 호출하기](#API-작성-및-호출하기)
 + [스스로 해보기1(팔로잉, 팔로워 API)](#스스로-해보기1(팔로잉,-팔로워-API))
++ [API 사용량 제한 구현하기](#API-사용량-제한-구현하기)
 
 
 
@@ -688,3 +689,99 @@ const following = await user.getFollowings({
 });
 ```
 여기서 attributes를 보면 아이디랑, 닉네임만 가져오게 된다.
+
+
+
+## API 사용량 제한 구현하기
+
+Nodebird-api 서버를 고도화 시켜서 사용량 제한을 구현하고,<br>
+call 서버에는 프론트에서 요청을 보내는 것을 구현할 것이다.
+
+<pre><code>npm i express-rate-limit</code></pre>
+
+#### nodebird-api/routes/middlewares.js
+```js
+const RateLimit = require('express-rate-limit');
+
+...이하 생략
+
+
+// 사용량 제한 설정
+exports.apiLimiter = new RateLimit({
+    windowMs: 60 * 1000, // 이 시간 동안 
+    max: 1, // 최대 횟수 
+    delayMs: 0, // 요청 간 간격 ( 호출 간에 텀(간격)) 
+    // --> 1초동안 한 번만 요청할 수 있다.
+    handler(req, res) { // 위에 것을 어겼을 경우 메세지
+        res.status(this.statusCode).json({
+            code: this.statusCode, // 420 에러가 나온다.
+            message: `1분에 한 번만 요청할 수 있습니다.`,
+        })
+    }
+});
+
+// v2(버전 2)를 시작하면 v1(버전 1)사용하지 못하게 한다.
+exports.deprecated = ( req, res) => {
+    res.status(410).json({
+        code: 410,
+        message: `새로운 버전이 나왔습니다. 새로운 버전을 사용하세요.`,
+    })
+}
+
+```
+Tip인데 코드는 헷갈리지 않도록 정확하고 명확하게 해야한다.<br>
+지금은 마음대로 정한건데 나중에 개발하게 되면 정확하게 지정해야한다. <br>
+
+#### nodebird-api/routes/v1.js
+```js
+const { verifyToken, deprecated } = require('./middlewares');
+
+router.use(deprecated); // 이 안에 모든 라우터는 deprecated 적용이 된다.
+
+```
+router.use(deprecated); 는 app.js에서 app.use(); 형식이랑 비슷하다. 즉, 모든 라우터에 적용하는 것이다. <br>
+하지만, 여기 라우터만 작용되는 것이다.<br>
+
+#### nodebird-api/routes/v2.js
+
+```js
+const express = require('express');
+const jwt = require('jsonwebtoken');
+
+const { verifyToken, apiLimiter } = require('./middlewares');
+const { Domain, User, Post, Hashtag } = require('../models');
+const router = express.Router();
+
+router.post('/token', apiLimiter, async(req, res) => {
+  ...동일
+});
+
+router.get('/test', apiLimiter, verifyToken, (req, res) => {
+  res.json(req.decoded);
+});
+
+
+router.get('/posts/my',apiLimiter, verifyToken, (req, res) => {
+  ...동일
+});
+
+router.get('/posts/hashtag/:title',apiLimiter, verifyToken, async(req, res) => {
+  ...동일
+});
+
+router.get('/follow', apiLimiter, verifyToken, async(req, res) => {
+  ...동일
+});
+
+module.exports = router;
+```
+
+일단 v2는 사용하는데 <strong>API 사용량 제한</strong> 걸기위해서 <strong>apiLimiter</strong>를 해주었다.<br> 
+apiLimiter는 `./middlewares`에 따로 만들어 주었다.<br>
+
+#### nodebird-call/rotes/index.js
+
+```
+const URL = 'http://localhost:8002/v2';
+```
+URL을 전부 v2를 지정해주면 끝이다. 그러면 v2가 실행이 된다.

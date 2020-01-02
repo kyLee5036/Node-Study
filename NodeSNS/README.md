@@ -6,3 +6,5 @@
 ## API 서버 만들기 ( nodebird-api )
 
 ## 클라이언트 만들기 ( nodebird-call )
+
+nodemon-app 재시작 -> rs

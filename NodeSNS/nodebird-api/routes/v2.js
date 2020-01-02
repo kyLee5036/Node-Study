@@ -1,19 +1,14 @@
-// 1버전의 의미
-
+// v2를 시작하면 v1사용하지 못하게 한다.
+// v1에서 apiLimiter를 추가한 v2이다.
+// v1 라우터를 못 사용하게 해야한다.
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { verifyToken, deprecated } = require('./middlewares');
-// 만들었던 DB
-const { Domain, User, Post, Hashtag} = require('../models');
-
+const { verifyToken, apiLimiter } = require('./middlewares');
+const { Domain, User, Post, Hashtag } = require('../models');
 const router = express.Router();
-router.use(deprecated); // 이 안에 모든 라우터는 deprecated 적용이 된다.
-// app.js에서 app.use(); 형식이랑 비슷하다. 모든 라우터에 적용하는 것이다! 그거랑 원리랑 비슷하다.
-// 하지만, 여기 라우터만 작용되는 것이다.
 
-//토큰을 발급할 것들
-router.post('/token', async(req, res) => {
+router.post('/token', apiLimiter, async(req, res) => {
   const { clientSecret } = req.body;
   try {
     // 도메인에서 clientSecret가 맞는지 확인한다.
@@ -52,7 +47,7 @@ router.post('/token', async(req, res) => {
 });
 
 // verifyToken의 검정은 routes/middlewares.js에 있다
-router.get('/test', verifyToken, (req, res) => {
+router.get('/test', apiLimiter, verifyToken, (req, res) => {
   res.json(req.decoded);
 });
 
@@ -60,7 +55,7 @@ router.get('/test', verifyToken, (req, res) => {
 // 무조건 토큰부터 검사를 해야한다.
 
 // 내가 작성한 게시글들을 불러온다.
-router.get('/posts/my', verifyToken, (req, res) => {
+router.get('/posts/my',apiLimiter, verifyToken, (req, res) => {
   Post.findAll({ where: { userId: req.decoded.id } }) // 게시글을 다 겨온다.
     .then((posts) => { // 성공할 경우
       console.log(posts);
@@ -79,7 +74,7 @@ router.get('/posts/my', verifyToken, (req, res) => {
 });
 
 // 해시태그를 검색하는 기능
-router.get('/posts/hashtag/:title', verifyToken, async(req, res) => {
+router.get('/posts/hashtag/:title',apiLimiter, verifyToken, async(req, res) => {
   try {
     const hashtag = await Hashtag.findOne({ where: { title: req.params.title }});
     if (!hashtag) {
@@ -103,7 +98,7 @@ router.get('/posts/hashtag/:title', verifyToken, async(req, res) => {
 });
 
 //팔로워 팔로잉 목록 API 만들기
-router.get('/follow', verifyToken, async(req, res) => {
+router.get('/follow', apiLimiter, verifyToken, async(req, res) => {
   try {
     const user = await User.findOne({ 
       where: {
@@ -130,4 +125,4 @@ router.get('/follow', verifyToken, async(req, res) => {
   }
 });
 
-module.exports = router
+module.exports = router;
