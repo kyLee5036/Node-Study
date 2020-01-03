@@ -3,11 +3,34 @@
 // v1 라우터를 못 사용하게 해야한다.
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const cors = require('cors');
+const url = require('url');
 
 const { verifyToken, apiLimiter } = require('./middlewares');
 const { Domain, User, Post, Hashtag } = require('../models');
 
 const router = express.Router();
+// cors를 사용한다. 의미는 
+// router.use(cors()); // 단순하게 사용하지말고 커스터마이징 사용하는 방법도 있다.
+
+router.use(async (req, res, next) => {
+  const domain = await Domain.findOne({
+    where: {
+      // 먼저 뒷 부분에 host가 localhost:8003이다.
+      host: url.parse(req.get('origin')).host 
+      // 여기 의미가 nodebird-api에서 등록된 DB의 API만 도메인 주소를 사용하는 것을 허용해준다. 
+      // 등록된 것만 허용된다. 
+    },
+  });
+  // domain DB데이터에 등록 되어있으면 접근허용한다.
+  if (domain) {
+    cors({origin: req.get('origin')})(req,res, next);
+  } else {
+    next();
+  }
+});
+// 미들웨어 안에 미들웨어를 넣어 커스터마이징할 수 있다.
+
 
 router.post('/token', apiLimiter, async (req, res) => {
   const { clientSecret } = req.body;

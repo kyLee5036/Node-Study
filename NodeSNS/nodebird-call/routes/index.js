@@ -104,4 +104,9 @@ router.get('/follow', async (req, res, next) => {
   }
 });
 
+// CORS 에러를 확인을 위해서 임시로 만들었다.
+router.get('/', (req, res) => {
+  res.render('main', { key: process.env.CLIENT_SECRET });
+});
+
 module.exports = router;

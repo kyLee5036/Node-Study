@@ -8,7 +8,7 @@
 + [API 작성 및 호출하기](#API-작성-및-호출하기)
 + [스스로 해보기1(팔로잉, 팔로워 API)](#스스로-해보기1(팔로잉,-팔로워-API))
 + [API 사용량 제한 구현하기](#API-사용량-제한-구현하기)
-
++ [CORS 해결하기](#CORS-해결하기)
 
 
 ## API 서버의 개념과 필요성
@@ -785,3 +785,110 @@ apiLimiter는 `./middlewares`에 따로 만들어 주었다.<br>
 const URL = 'http://localhost:8002/v2';
 ```
 URL을 전부 v2를 지정해주면 끝이다. 그러면 v2가 실행이 된다.
+
+
+
+
+## CORS 해결하기
+
+혹시나, 오리진 -> (origin 의미)
+
+<strong>CORS</strong>(cross origin resource sharing)<br>
+> 프론트에서 다른 오리진의 서버로 요청을 보내면 에러 발생
+localhost:8003을 오리진을 생각하면 localhost:8003을 localhost:8002에 요청을 보내면 CORS 위반이 된다.<br>
+
+오리진이 부분이 다른데 요청을 보내면 에러가 걸린다. <br>
+하지만, CORS에러가 항상 에러가 발생하지 않다. <br>
+프론트에서 다른 오리진 서버에 요청을 보낼 때 에러가 걸린다. (프론트 -> 프론트)<br> 
+서버에서 서버로 요청을 보낼 때에는  CORS에러가 안 나타난다.<br>
+그래서 프록시 요청을 사용해서 극복하는 방법도 있다. 또는, 응답헤더에 뭔가 사용해서 해결할 수도 있다.<br>
+에러내용이<br> 
+<pre><code>Response to preflight request doesn`t pass access control check:
+No `Access-Control-Allow-Origin` header is present on the requested resource.Origin</code></pre>
+
+Access-Control-Allow-Origin 헤더를 응답 헤더에 넣어주면 된다.<br>
+
+여기서 해결방법을 알아보자!<br>
+<pre><code>npm i cors</code></pre>
+
+대표적인 기본적 방법이 있다. (참고로 기본적인 방법이다. <br>
+```js
+router.use(cors()); // 솔직히 간편하게 라우터에 다 작용해서 해결해도 상관은 없다.
+router.use(cors(`http://localhost:8003`)); // 내가 지정한 도메인만 넣어줘서 해결하는 방법도 있다. 
+router.use(cors(`*`)); // 도메인을  전부 허용한다. 하지만 보안성 다른 방법도 있다.
+```
+
+
+커스터마이징 사용 전 (cors 사용방법) (위와 하는 방식이 비슷하다.)<br>
+```js
+// cors를 사용한다. 의미는 
+router.use(cors()); // 단순하게 사용하지말고 커스터마이징 사용하는 방법도 있다.
+```
+여기서부터는 <strong>커스터마이징</strong>을 사용한다.
+
+커스터마이징 사용 후 (cors 기본사용 방법)<br>
+```js
+router.use(async (req, res, next) => {
+  cors()(req,res, next);
+});
+// 미들웨어 안에 미들웨어를 넣어 커스터마이징할 수 있다.
+```
+> 미들웨어 안에 미들웨어를 넣어 커스터마이징할 수 있다.
+
+커스터마이징 사용 후 (cors 응용하는 방법)<br>
+```js
+router.use(async (req, res, next) => {
+  const domain = await Domain.findOne({
+    where: {
+      // 먼저 뒷 부분에 host가 localhost:8003이다.
+      host: url.parse(req.get('origin')).host 
+      // 여기 의미가 nodebird-api에서 등록된 DB의 API만 도메인 주소를 사용하는 것을 허용해준다. 
+      // 등록된 것만 허용된다. 
+    },
+  });
+  // domain DB데이터에 등록 되어있으면 접근허용한다.
+  if (domain) {
+    cors({origin: req.get('origin')})(req,res, next);
+  } else {
+    next();
+  }
+});
+```
+
+크롬 개발자 툴(F12 -> Netword)을 보면
+CORS 요청 시에는 OPTIONS 메서드 요청이 간다.<br>
+Access`Control-Allow-Origin을 검사한다. <br>
+
+먼저 OPTIONS를 검사먼저 한다.<br> Access-Control-Allow-Origin가 없으면 OPTIONS에 먼저 차단이 된다. <br>
+
+등록할 떄 <strong>http://</strong>를 뺴고 등록해야 한다.<br>
+
+
+#### nodebird-api/routes/v2.js
+```js
+const cors = require('cors');
+const url = require('url');
+
+...이하 생략
+
+// cors를 사용한다. 의미는 
+// router.use(cors()); // 단순하게 사용하지말고 커스터마이징 사용하는 방법도 있다.
+
+router.use(async (req, res, next) => {
+  const domain = await Domain.findOne({
+    where: {
+      // 먼저 뒷 부분에 host가 localhost:8003이다.
+      host: url.parse(req.get('origin')).host 
+      // 여기 의미가 nodebird-api에서 등록된 DB의 API만 도메인 주소를 사용하는 것을 허용해준다. 
+      // 등록된 것만 허용된다. 
+    },
+  });
+  // domain DB데이터에 등록 되어있으면 접근허용한다.
+  if (domain) {
+    cors({origin: req.get('origin')})(req,res, next);
+  } else {
+    next();
+  }
+});
+// 미들웨어 안에 미들웨어를 넣어 커스터마이징할 수 있다.
+```
