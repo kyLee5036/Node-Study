@@ -6,13 +6,12 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const url = require('url');
 
-const { verifyToken, apiLimiter } = require('./middlewares');
+const { verifyToken, premiumAPiLimiter, apiLimiter } = require('./middlewares');
 const { Domain, User, Post, Hashtag } = require('../models');
 
 const router = express.Router();
 // cors를 사용한다. 의미는 
 // router.use(cors()); // 단순하게 사용하지말고 커스터마이징 사용하는 방법도 있다.
-
 router.use(async (req, res, next) => {
   const domain = await Domain.findOne({
     where: {
@@ -31,8 +30,19 @@ router.use(async (req, res, next) => {
 });
 // 미들웨어 안에 미들웨어를 넣어 커스터마이징할 수 있다.
 
+// API 유료 or 무료 검사하는 곳
+router.use((req, res, next) => {
+  const domain = await Domain.findOne({
+    where: {host: url.parse(req.get('origin').host)},
+  });
+  if (domain.type === 'premium') {
+    premiumAPiLimiter(req, res, next);
+  } else {
+    apiLimiter(req, res, next);
+  }
+});
 
-router.post('/token', apiLimiter, async (req, res) => {
+router.post('/token', async (req, res) => {
   const { clientSecret } = req.body;
   try {
     const domain = await Domain.findOne({
@@ -69,11 +79,11 @@ router.post('/token', apiLimiter, async (req, res) => {
   }
 });
 
-router.get('/test', verifyToken, apiLimiter, (req, res) => {
+router.get('/test', verifyToken, (req, res) => {
   res.json(req.decoded);
 });
 
-router.get('/posts/my', apiLimiter, verifyToken, (req, res) => {
+router.get('/posts/my', verifyToken, (req, res) => {
   Post.findAll({ where: { userId: req.decoded.id } })
     .then((posts) => {
       console.log(posts);
@@ -91,7 +101,7 @@ router.get('/posts/my', apiLimiter, verifyToken, (req, res) => {
     });
 });
 
-router.get('/posts/hashtag/:title', verifyToken, apiLimiter, async (req, res) => {
+router.get('/posts/hashtag/:title', verifyToken, async (req, res) => {
   try {
     const hashtag = await Hashtag.findOne({ where: { title: req.params.title } });
     if (!hashtag) {
@@ -115,7 +125,7 @@ router.get('/posts/hashtag/:title', verifyToken, apiLimiter, async (req, res) =>
 });
 
 //팔로워 팔로잉 목록 API 만들기
-router.get('/follow', apiLimiter, verifyToken, async(req, res) => {
+router.get('/follow', verifyToken, async(req, res) => {
   try {
     const user = await User.findOne({ 
       where: {

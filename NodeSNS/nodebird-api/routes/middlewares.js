@@ -44,7 +44,7 @@ exports.verifyToken = (req, res, next) => {
     }
 }
 
-// 사용량 제한 설정
+// 사용량 제한 설정 (무료인거)
 exports.apiLimiter = new RateLimit({
     windowMs: 60 * 1000, // 1분
     max: 100,
@@ -52,7 +52,20 @@ exports.apiLimiter = new RateLimit({
     handler(req, res) {
       res.status(this.statusCode).json({
         code: this.statusCode, // 기본값 429
-        message: '1분에 한 번만 요청할 수 있습니다.',
+        message: '무료 사용자는 1분에 한 번만 요청할 수 있습니다.',
+      });
+    },
+  });
+
+  // 유료인 API
+exports.premiumAPiLimiter = new RateLimit({
+    windowMs: 60 * 1000, // 1분
+    max: 100,
+    delayMs: 0,
+    handler(req, res) {
+      res.status(this.statusCode).json({
+        code: this.statusCode, // 기본값 429
+        message: '유료 사용자는 1분에 1000번 요청할 수 있습니다.',
       });
     },
   });

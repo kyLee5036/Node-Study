@@ -9,6 +9,7 @@
 + [스스로 해보기1(팔로잉, 팔로워 API)](#스스로-해보기1(팔로잉,-팔로워-API))
 + [API 사용량 제한 구현하기](#API-사용량-제한-구현하기)
 + [CORS 해결하기](#CORS-해결하기)
++ [스스로 해보기2(무료/유료에 따라 사용량 차등 제한)](#스스로-해보기2(무료/유료에-따라-사용량-차등-제한))
 
 
 ## API 서버의 개념과 필요성
@@ -891,4 +892,72 @@ router.use(async (req, res, next) => {
   }
 });
 // 미들웨어 안에 미들웨어를 넣어 커스터마이징할 수 있다.
+```
+
+## 스스로 해보기2(무료/유료에 따라 사용량 차등 제한)
+
+구글 개발자 툴에 보면 clientSecret가 노출되어있다. 
+clientSecret같은 서버용 키와 프론트용 키를 따로 발급해주는 것이 좋다. 
+
+#### nodebird-api/routes/middlewares.js
+
+유료, 무료 API 제한 설정
+```js
+// 사용량 제한 설정 (무료인거)
+exports.apiLimiter = new RateLimit({
+    windowMs: 60 * 1000, // 1분
+    max: 100,
+    delayMs: 0,
+    handler(req, res) {
+      res.status(this.statusCode).json({
+        code: this.statusCode, // 기본값 429
+        message: '무료 사용자는 1분에 한 번만 요청할 수 있습니다.',
+      });
+    },
+  });
+
+  // 유료인 API
+exports.premiumAPiLimiter = new RateLimit({
+    windowMs: 60 * 1000, // 1분
+    max: 100,
+    delayMs: 0,
+    handler(req, res) {
+      res.status(this.statusCode).json({
+        code: this.statusCode, // 기본값 429
+        message: '유료 사용자는 1분에 1000번 요청할 수 있습니다.',
+      });
+    },
+  });
+```
+
+#### nodebird-api/routes/v2.js
+
+```js
+
+const { verifyToken, premiumAPiLimiter, apiLimiter } = require('./middlewares');
+
+// API 유료 or 무료 검사하는 곳
+router.use((req, res, next) => {
+  const domain = await Domain.findOne({
+    where: {host: url.parse(req.get('origin').host)},
+  });
+  if (domain.type === 'premium') {
+    premiumAPiLimiter(req, res, next);
+  } else {
+    apiLimiter(req, res, next);
+  }
+});
+
+// 그리고 이전에 router안에 apiLimiter를 다 지워줘야하는 것 잊지말기!!!
+```
+이전에 router안에 apiLimiter를 다 지워줘야하는 것 잊지말기!!!
+
+바꾸기 전
+```js
+router.get('/posts/my', apiLimiter, verifyToken, (req, res) => {
+```
+
+바꾸기 후
+```js
+router.get('/posts/my', verifyToken, (req, res) => {
 ```
